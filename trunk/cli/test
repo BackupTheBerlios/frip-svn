@@ -1,5 +1,0 @@
-#!/bin/sh
-src="in.wav"
-cmd="./frip -v -l stderr in.aiff out.wav"
-echo $cmd
-eval $cmd
