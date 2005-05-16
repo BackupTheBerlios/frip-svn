@@ -24,11 +24,12 @@ static void show_stat(unsigned int percentage)
 int main(int argc, char * const * argv)
 {
 	bool verbose = true;
+	const char *logname = "stderr";
 
 	for (int ch; (ch = getopt(argc, argv, "ql:")) != -1; ) {
 		switch (ch) {
 		case 'l':
-			frip_set_log(optarg);
+			logname = optarg;
 			break;
 		case 'q':
 			verbose = false;
@@ -51,6 +52,8 @@ int main(int argc, char * const * argv)
 		fprintf(stderr, "Not enough file names.\n");
 		return 1;
 	}
+
+	frip_set_log(logname);
 
 	while (argc >= 2) {
 		if (verbose) {

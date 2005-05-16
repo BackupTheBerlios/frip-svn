@@ -7,12 +7,17 @@
 #include "reader.h"
 #include "writer.h"
 
+static inline bool equals(const char *a, const char *b)
+{
+	return strcasecmp(a, b) == 0;
+}
+
 static reader * mkreader(const char *fname, frip_callback cb)
 {
 	const char *ext = strchr(fname, '.');
 
-	if (ext++ != NULL) {
-		if (strcasecmp(ext, ".aiff") == 0 || strcasecmp(ext, ".aif") == 0)
+	if (ext != NULL) {
+		if (equals(ext, ".aiff") || equals(ext, ".aif"))
 			return new raiff(cb);
 		else if (strcasecmp(ext, ".wav") == 0)
 			return new rwave(cb);
@@ -25,19 +30,21 @@ static writer * mkwriter(const char *fname, const reader *r)
 {
 	const char *ext = strchr(fname, '.');
 
-	if (ext++ != NULL) {
-		if (strcasecmp(ext, ".raw") == 0)
+	if (ext != NULL) {
+		if (equals(ext, ".raw"))
 			return new wraw(r);
-		else if (strcasecmp(ext, ".wav") == 0 || strcasecmp(ext, ".wave") == 0)
+		else if (equals(ext, ".wav") || equals(ext, ".wave"))
 			return new wwave(r);
+		else if (equals(ext, ".aiff"))
+			return new waiff(r);
 #ifdef HAVE_lame
-		else if (strcasecmp(ext, ".mp3") == 0)
+		else if (equals(ext, ".mp3"))
 			return new wlame(r);
 #endif
 #ifdef HAVE_flac
-		else if (strcasecmp(ext, ".flac") == 0)
+		else if (equals(ext, ".flac"))
 			return new wflacf(r);
-		else if (strcasecmp(ext, ".flacs") == 0)
+		else if (equals(ext, ".flacs"))
 			return new wflacs(r);
 #endif
 	}
@@ -72,7 +79,9 @@ E bool frip_encode(const char *iname, const char *oname, frip_callback cb)
 	}
 
 	while (r->read(smp, 2048)) {
-		w->write(smp);
+		if (!w->write(smp)) {
+			return false;
+		}
 	}
 
 	return true;

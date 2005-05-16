@@ -15,15 +15,18 @@ wflacf::~wflacf()
 		finish();
 }
 
-void wflacf::write(samples &smp)
+bool wflacf::write(samples &smp)
 {
 	if (smp.size() % mChannels == 0) {
 		if (!process_interleaved(&smp[0], smp.size() / mChannels)) {
 			log("wflacf: encoding error: %s.", get_state().as_cstring());
+			return false;
 		} else {
 			smp.clear();
 		}
 	}
+
+	return true;
 }
 
 bool wflacf::open(const char *fname)

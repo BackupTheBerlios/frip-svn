@@ -11,29 +11,33 @@ wwave::~wwave()
 {
 }
 
-void wwave::write(samples &smp)
+bool wwave::write(samples &smp)
 {
 	if (smp.size() & 1)
-		return;
+		return true;
 
 	if (mSampleSize != 16) {
 		log("wwave: write failed: unsupported sample size: %u.", mSampleSize);
-		return;
+		return false;
 	}
 
 	for (samples::const_iterator it = smp.begin(); it != smp.end(); it++) {
 		if (mSampleSize == 16) {
 			out.write_short_le(*it);
+		} else {
+			log("wwave: unsupported output sample size: %u.", mSampleSize);
+			return false;
 		}
 	}
 
 	smp.clear();
+	return true;
 }
 
 bool wwave::open(const char *fname)
 {
-	unsigned bps = mReader->GetSampleSize() / 8;
-	unsigned pcmbytes = mReader->GetSampleCount() * mReader->GetChannels() * bps;
+	unsigned bps = mReader->GetFrameSize() / mReader->GetChannels();
+	unsigned pcmbytes = mReader->GetFrameCount() * mReader->GetFrameSize();
 
 	if (!writer::open(fname))
 		return false;

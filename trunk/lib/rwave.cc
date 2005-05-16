@@ -2,11 +2,6 @@
 
 #include "reader.h"
 
-#define WAV_ID_RIFF 0x52494646
-#define WAV_ID_WAVE 0x57415645
-#define WAV_ID_FMT 0x666D7420
-#define WAV_ID_DATA 0x64617461
-
 rwave::rwave(frip_callback cb) :
 	rpcm(cb)
 {
@@ -95,29 +90,21 @@ bool rwave::subchunk(unsigned id)
 		if (!in.read_short_le(mChannels, &mChunkSize)) {
 			log("rwave: fmt: no channel count.");
 			return false;
-		} else {
-			log("rwave: fmt: channels = %u", mChannels);
 		}
 
 		if (!in.read_int_le(mSampleRate, &mChunkSize)) {
 			log("rwave: fmt: no sample rate.");
 			return false;
-		} else {
-			log("rwave: fmt: sample rate = %u", mSampleRate);
 		}
 
 		if (!in.read_int_le(itmp, &mChunkSize)) {
 			log("rwave: fmt: avg. bytes per second not found.");
 			return false;
-		} else {
-			log("rwave: fmt: bytes per second: %u.", itmp);
 		}
 
 		if (!in.read_short_le(mBlockAlign, &mChunkSize)) {
 			log("rwave: block align not found.");
 			return false;
-		} else {
-			log("rwave: fmt: block align = %u", mBlockAlign);
 		}
 
 		if (!in.read_short_le(mSampleSize, &mChunkSize)) {
@@ -126,14 +113,22 @@ bool rwave::subchunk(unsigned id)
 		} else if (mSampleSize != 16) {
 			log("rwave: fmt: unsupported bps: %u.", mSampleSize);
 			return false;
-		} else {
-			log("rwave: fmt: sample size: %u.", mSampleSize);
 		}
 	}
 
 	else if (id == WAV_ID_DATA) {
 		mSamplesLeft = mSamplesTotal = mChunkSize / mChannels;
 		log("rwave: found the data chunk, %u bytes long (%u wide samples).", mChunkSize, mSamplesTotal / (mSampleSize / 8));
+
+		log("rwave: channels = %u", mChannels);
+		log("rwave: sample rate = %u", mSampleRate);
+		log("rwave: block align = %u", mBlockAlign);
+		log("rwave: sample size = %u.", mSampleSize);
+
+		{
+			unsigned duration = GetFrameCount() / GetSampleRate();
+			log("rwave: duration = %u:%02u", duration / 60, duration % 60);
+		}
 	}
 
 	else {

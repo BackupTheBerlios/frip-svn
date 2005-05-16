@@ -29,6 +29,8 @@ public:
 	bool write_short_le(short);
 	bool write_int_le(int);
 	bool write_int_le(unsigned);
+	bool write_int_be(int);
+	bool write_float_be(double);
 	bool write(const void *, unsigned);
 	bool write(const char *);
 };

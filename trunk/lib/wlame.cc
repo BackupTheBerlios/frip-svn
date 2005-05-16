@@ -34,7 +34,7 @@ bool wlame::open(const char *fname)
 	return true;
 }
 
-void wlame::write(samples &smp)
+bool wlame::write(samples &smp)
 {
 	int len;
 	std::vector<short> mp3;
@@ -54,6 +54,8 @@ void wlame::write(samples &smp)
 	if ((len = lame_encode_buffer_interleaved(mLame, &mp3[0], mp3.size() / 2, &coded[0], coded.size())) > 0) {
 		out.write(&coded[0], len);
 	}
+
+	return true;
 }
 
 #endif

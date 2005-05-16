@@ -15,15 +15,18 @@ wflacs::~wflacs()
 		finish();
 }
 
-void wflacs::write(samples &smp)
+bool wflacs::write(samples &smp)
 {
 	if (smp.size() % mChannels == 0) {
 		if (!process_interleaved(&smp[0], smp.size() / mChannels)) {
 			log("wflacs: encoding error: %s.", get_state().as_cstring());
+			return false;
 		} else {
 			smp.clear();
 		}
 	}
+
+	return true;
 }
 
 bool wflacs::open(const char *fname)

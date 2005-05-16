@@ -11,10 +11,10 @@ wraw::~wraw()
 {
 }
 
-void wraw::write(samples &smp)
+bool wraw::write(samples &smp)
 {
 	if (smp.size() & 1)
-		return;
+		return true;
 
 	for (samples::const_iterator it = smp.begin(); it != smp.end(); ++it) {
 		if (mSampleSize == 16) {
@@ -23,6 +23,7 @@ void wraw::write(samples &smp)
 	}
 
 	smp.clear();
+	return true;
 }
 
 bool wraw::open(const char *fname)

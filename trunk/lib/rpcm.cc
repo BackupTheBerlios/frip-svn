@@ -39,7 +39,7 @@ bool rpcm::read(samples &smp, size_t count)
 				short tmp;
 
 				if (!in.read_short_le(tmp, &mChunkSize)) {
-					log("rpcm: failed reading a sample.");
+					log("rpcm: failed reading a sample (expecting %u more samples; count = %u).", mSamplesLeft, count);
 					return false;
 				}
 
@@ -52,7 +52,7 @@ bool rpcm::read(samples &smp, size_t count)
 				short tmp;
 
 				if (!in.read_short_be(tmp, &mChunkSize)) {
-					log("rpcm: failed reading a sample.");
+					log("rpcm: failed reading a sample (expecting %u more samples; count = %u).", mSamplesLeft, count);
 					return false;
 				}
 

@@ -21,7 +21,7 @@ protected:
 public:
 	writer(const reader *);
 	virtual ~writer();
-	virtual void write(samples &smp) = 0;
+	virtual bool write(samples &smp) = 0;
 	virtual bool open(const char *fname);
 	virtual const char * name() const = 0;
 };
@@ -31,7 +31,7 @@ class wraw : public writer
 public:
 	wraw(const reader *);
 	~wraw();
-	void write(samples &smp);
+	bool write(samples &smp);
 	bool open(const char *fname);
 	const char * name() const { return "raw"; }
 };
@@ -41,9 +41,19 @@ class wwave : public writer
 public:
 	wwave(const reader *);
 	~wwave();
-	void write(samples &smp);
+	bool write(samples &smp);
 	bool open(const char *fname);
 	const char * name() const { return "wave"; }
+};
+
+class waiff : public writer
+{
+public:
+	waiff(const reader *);
+	~waiff();
+	bool write(samples &smp);
+	bool open(const char *fname);
+	const char * name() const { return "aiff"; }
 };
 
 #ifdef HAVE_flac
@@ -57,7 +67,7 @@ protected:
 public:
 	wflacs(const reader *);
 	~wflacs();
-	void write(samples &smp);
+	bool write(samples &smp);
 	bool open(const char *fname);
 	const char * name() const { return "flac"; }
 protected:
@@ -76,7 +86,7 @@ protected:
 public:
 	wflacf(const reader *);
 	~wflacf();
-	void write(samples &smp);
+	bool write(samples &smp);
 	bool open(const char *fname);
 	const char * name() const { return "flac"; }
 };
@@ -89,7 +99,7 @@ class wlame : public writer
 public:
 	wlame(const reader *);
 	~wlame();
-	void write(samples &smp);
+	bool write(samples &smp);
 	bool open(const char *fname);
 	const char * name() const { return "lame"; }
 };

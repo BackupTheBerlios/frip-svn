@@ -2,17 +2,6 @@
 
 #include "reader.h"
 
-#define IFF_ID_FORM 0x464F524D /* "FORM" */
-#define IFF_ID_AIFF 0x41494646 /* "AIFF" */
-#define IFF_ID_AIFC 0x41494643 /* "AIFC" */
-#define IFF_ID_COMM 0x434f4d4d /* "COMM" */
-#define IFF_ID_SSND 0x53534e44 /* "SSND" */
-#define IFF_ID_MPEG 0x4d504547 /* "MPEG" */
-
-#define IFF_ID_NONE 0x4e4f4e45 /* "NONE" */ /* AIFF-C data format */
-#define IFF_ID_2CBE 0x74776f73 /* "twos" */ /* AIFF-C data format */
-#define IFF_ID_2CLE 0x736f7774 /* "sowt" */ /* AIFF-C data format */
-
 raiff::raiff(frip_callback cb) :
 	rpcm(cb)
 {
@@ -142,13 +131,18 @@ bool raiff::open(const char *fname)
 				return false;
 			}
 
-			log("raiff: channels: %u.", mChannels);
-			log("raiff: sample size: %u.", mSampleSize);
-			log("raiff: sample rate: %u.", (unsigned)mSampleRate);
-			log("raiff: frames: %u.", mSamplesTotal);
-			log("raiff: block offset: %u.", mBlockOffset);
-			log("raiff: block size: %u.", mBlockSize);
-			log("raiff: byte order: %s.", mLittleEndian ? "le" : "be");
+			log("raiff: channels = %u.", mChannels);
+			log("raiff: sample size = %u.", mSampleSize);
+			log("raiff: sample rate = %u.", GetSampleRate());
+			log("raiff: frames = %u.", GetFrameCount());
+			log("raiff: block offset = %u.", mBlockOffset);
+			log("raiff: block size = %u.", mBlockSize);
+			log("raiff: byte order = %s.", mLittleEndian ? "le" : "be");
+
+			{
+				unsigned duration = GetFrameCount() / GetSampleRate();
+				log("raiff: duration = %u:%02u", duration / 60, duration % 60);
+			}
 
 			in.skip(mBlockOffset);
 
