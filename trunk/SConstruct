@@ -1,0 +1,82 @@
+# SCons script for parabellym.
+# $Id: SConstruct 31 2005-05-02 17:19:56Z vhex $
+# vim:ts=4:sts=4:sw=4:et:nocindent:ft=python
+
+import faerion
+import os
+
+# Version number.
+version = '1.0'
+
+# The helper object.
+fae = faerion.Faerion()
+
+Help("""
+Usage: scons [options]
+
+The following options are available:
+
+  debug=yes   : include debug symbols and output.
+  release=yes : set when you are preparing a release package.
+  modules=yes : build sample modules, too.
+  stubs=yes   : build loaders, too.
+  srcdist=yes : build a source code tarball.
+
+Send your comments to Justin Forest <justin.forest@gmail.com>
+""")
+
+# Build options.
+opts = Options('config.options')
+opts.Add(BoolOption('debug', 'Set to include debug symbols and output', False))
+opts.Add(BoolOption('modules', 'Set to build sample modules', False))
+opts.Add(BoolOption('stubs', 'Set to build sample stubs', False))
+opts.Add(BoolOption('scrdist', 'Set to build the source code tarball', False))
+opts.Add(BoolOption('release', 'Set this option only if you are preparing a release', False))
+opts.Add(EnumOption('build_tool', 'Override the build tool (for maintainers mostly)', 'default', allowed_values = ('default', 'mingw'), ignorecase = 1))
+
+# The default environment.
+env = Environment(options = opts)
+
+# Override the tool if there are many installed.
+if env['build_tool'] != 'default':
+	env = Environment(tools = [env['build_tool']], options = opts)
+
+env.Append(CPPDEFINES = [('VERSION', '\\"' + version + '\\"')])
+
+# Check the system configuration if we're not cleaning up.
+if env.GetOption('clean'):
+	print 'Skipping autoconfiguration due to a clean-up.'
+else:
+    conf = fae.Configure(Configure(env), env)
+
+	if conf.CheckFunc('getopt'):
+		conf.env.Append(CPPDEFINES = 'HAVE_getopt')
+	if env['PLATFORM'] == 'win32':
+		conf.env.Append(CPPDEFINES = 'WIN32_LEAN_AND_MEAN')
+    if conf.CheckCXXHeader('FLAC++/all.h'):
+        if conf.CheckLib('FLAC'):
+            if conf.CheckLib('FLAC++'):
+                conf.env.Append(CPPDEFINES = 'HAVE_flac')
+    if conf.CheckCHeader('lame/lame.h'):
+        if conf.CheckLib('mp3lame'):
+            conf.env.Append(CPPDEFINES = 'HAVE_lame')
+
+    env = fae.FinishConf(conf)
+    env.Append(CFLAGS = '-Wall -Werror')
+    env.Append(CXXFLAGS = '-Wall -Werror')
+    # env.Append(LINKFLAGS = '-framework AudioToolbox -framework Carbon')
+
+opts.Save('config.options', env)
+Export('env', 'fae')
+
+# The environment for libfrip dependers.
+lenv = env.Copy()
+lenv.Append(CPPPATH = ['lib'])
+lenv.Append(LIBPATH = ['lib'])
+lenv.Append(LIBS = 'frip')
+
+# The library.
+lib = env.SharedLibrary('lib/frip', fae.compile(env, ['lib']))
+
+# The command line interface.
+cli = lenv.Program('cli/frip', fae.compile(lenv, ['cli']))
