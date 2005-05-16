@@ -7,40 +7,53 @@
 #include "reader.h"
 #include "writer.h"
 
+static reader * mkreader(const char *fname, frip_callback cb)
+{
+	const char *ext = strchr(fname, '.');
+
+	if (ext++ != NULL) {
+		if (strcasecmp(ext, ".aiff") == 0 || strcasecmp(ext, ".aif") == 0)
+			return new raiff(cb);
+		else if (strcasecmp(ext, ".wav") == 0)
+			return new rwave(cb);
+	}
+
+	return NULL;
+}
+
+static writer * mkwriter(const char *fname, const reader *r)
+{
+	const char *ext = strchr(fname, '.');
+
+	if (ext++ != NULL) {
+		if (strcasecmp(ext, ".raw") == 0)
+			return new wraw(r);
+		else if (strcasecmp(ext, ".wav") == 0 || strcasecmp(ext, ".wave") == 0)
+			return new wwave(r);
+#ifdef HAVE_lame
+		else if (strcasecmp(ext, ".mp3") == 0)
+			return new wlame(r);
+#endif
+#ifdef HAVE_flac
+		else if (strcasecmp(ext, ".flac") == 0)
+			return new wflacf(r);
+		else if (strcasecmp(ext, ".flacs") == 0)
+			return new wflacs(r);
+#endif
+	}
+
+	return NULL;
+}
+
 E bool frip_encode(const char *iname, const char *oname, frip_callback cb)
 {
-	const char *ext;
-	std::auto_ptr<reader> r(0);
-	std::auto_ptr<writer> w(0);
+	std::auto_ptr<reader> r(mkreader(iname, cb));
+	std::auto_ptr<writer> w(mkwriter(oname, r.get()));
 	samples smp;
-
-	if ((ext = strrchr(iname, '.')) != NULL) {
-		if (strcasecmp(ext, ".aiff") == 0 || strcasecmp(ext, ".aif") == 0)
-			r.reset(new raiff(cb));
-		else if (strcasecmp(ext, ".wav") == 0)
-			r.reset(new rwave(cb));
-	}
 
 	if (r.get() == NULL) {
 		log("unknown input type.");
 		return false;
-	}
-
-	if ((ext = strrchr(oname, '.')) != NULL) {
-		if (strcasecmp(ext, ".raw") == 0)
-			w.reset(new wraw(r.get()));
-		else if (strcasecmp(ext, ".wav") == 0 || strcasecmp(ext, ".wave") == 0)
-			w.reset(new wwave(r.get()));
-#ifdef HAVE_lame
-		else if (strcasecmp(ext, ".mp3") == 0)
-			w.reset(new wlame(r.get()));
-#endif
-#ifdef HAVE_flac
-		else if (strcasecmp(ext, ".flac") == 0)
-			w.reset(new wflacf(r.get()));
-		else if (strcasecmp(ext, ".flacs") == 0)
-			w.reset(new wflacs(r.get()));
-#endif
 	}
 
 	if (w.get() == NULL) {

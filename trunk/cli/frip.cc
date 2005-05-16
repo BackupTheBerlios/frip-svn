@@ -6,7 +6,12 @@
 #include "frip.h"
 
 static const char *usagemsg =
-	"Usage: frip [in out [...]]\n"
+	"Usage: frip [options] [in out [...]]\n"
+	"\n"
+	"Options:\n"
+	"  -l name : write conversion log to the named file\n"
+	"  -q      : do not show conversion progress\n"
+	"\n"
 	"Send your bug reports to justin.forest@gmail.com\n"
 	"";
 
@@ -18,15 +23,15 @@ static void show_stat(unsigned int percentage)
 
 int main(int argc, char * const * argv)
 {
-	bool verbose = false;
+	bool verbose = true;
 
-	for (int ch; (ch = getopt(argc, argv, "vl:")) != -1; ) {
+	for (int ch; (ch = getopt(argc, argv, "ql:")) != -1; ) {
 		switch (ch) {
-		case 'v':
-			verbose = true;
-			break;
 		case 'l':
 			frip_set_log(optarg);
+			break;
+		case 'q':
+			verbose = false;
 			break;
 		default:
 			fprintf(stderr, "%s", usagemsg);
