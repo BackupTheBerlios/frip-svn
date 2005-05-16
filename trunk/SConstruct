@@ -69,14 +69,15 @@ else:
 opts.Save('config.options', env)
 Export('env', 'fae')
 
-# The environment for libfrip dependers.
+# Build the library.
+lib = env.SharedLibrary('lib/frip.0', fae.compile(env, ['lib']))
+
+# Prepare the environment for libfrip dependers.
 lenv = env.Copy()
 lenv.Append(CPPPATH = ['lib'])
 lenv.Append(LIBPATH = ['lib'])
-lenv.Append(LIBS = 'frip')
+lenv.Append(LIBS = 'frip.0')
 
-# The library.
-lib = env.SharedLibrary('lib/frip', fae.compile(env, ['lib']))
+cli = lenv.Program('cli/frip', fae.compile(lenv, ['cli']))
 
 # The command line interface.
-cli = lenv.Program('cli/frip', fae.compile(lenv, ['cli']))
