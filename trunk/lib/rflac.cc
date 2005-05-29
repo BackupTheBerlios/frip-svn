@@ -34,14 +34,21 @@ rflac::~rflac()
 
 ::FLAC__StreamDecoderWriteStatus rflac::write_callback(const ::FLAC__Frame *frame, const FLAC__int32 * const buffer[])
 {
+	size_t osz;
+	samples::iterator it;
+
 	if (frame->header.channels != mChannels) {
 		log("rflac: bad frame: channel number mismatch: expected %u, received %u.", mChannels, frame->header.channels);
 		return ::FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
 	}
 
+	osz = mSamples->size();
+	mSamples->resize(osz + frame->header.blocksize * mChannels);
+	it = mSamples->begin() + osz;
+
 	for (unsigned fidx = 0, lim = frame->header.blocksize; fidx < lim; ++fidx) {
 		for (unsigned int ch = 0; ch < mChannels; ++ch) {
-			mSamples->push_back(buffer[ch][fidx]);
+			*it++ = buffer[ch][fidx];
 		}
 	}
 
@@ -92,9 +99,9 @@ bool rflac::read(samples &smp, size_t preferred_wide_sample_count)
 		}
 
 		if (get_state() == FLAC__STREAM_DECODER_END_OF_STREAM) {
-			log("rflac: finished.");
+			log("rflac: finished the stream.");
 			mEOF = true;
-			return true;
+			break;
 		}
 	}
 

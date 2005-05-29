@@ -16,7 +16,6 @@ void log(const char *format, ...)
 		vfprintf(out, format, vl);
 		fprintf(out, "\n");
 		va_end(vl);
-		fflush(out);
 	}
 }
 
