@@ -3,6 +3,9 @@
 #ifndef __reader_h
 #define __reader_h
 
+#ifdef HAVE_flac
+# include <FLAC++/all.h>
+#endif
 #include <stdio.h>
 #include <vector>
 #include "file.h"
@@ -116,5 +119,32 @@ public:
 	bool open(const char *fname);
 	const char *name() const { return "wave"; }
 };
+
+#ifdef HAVE_flac
+class rflac : public reader, public FLAC::Decoder::Stream
+{
+	// Used to pass the temporary buffer to the callback handler.
+	samples *mSamples;
+	// Total file size.
+	size_t mFileSize;
+	// The amount of processed data.
+	size_t mProcessedSize;
+	// Set when the file is over.
+	bool mEOF;
+protected:
+	// FLAC.
+	::FLAC__StreamDecoderReadStatus read_callback(FLAC__byte buffer[], unsigned *bytes);
+	::FLAC__StreamDecoderWriteStatus write_callback(const ::FLAC__Frame *frame, const FLAC__int32 * const buffer[]);
+	void metadata_callback(const ::FLAC__StreamMetadata *metadata);
+	void error_callback(::FLAC__StreamDecoderErrorStatus status);
+	// reader.
+	bool read(samples &, size_t preferred_wide_sample_count);
+public:
+	rflac(frip_callback);
+	~rflac();
+	bool open(const char *fname);
+	const char *name() const { return "flac"; }
+};
+#endif
 
 #endif

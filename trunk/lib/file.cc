@@ -172,6 +172,12 @@ bool file::read_float_be(double &value, unsigned *sub)
 	return true;
 }
 
+bool file::read_raw(void *oBuf, unsigned &ioSize)
+{
+	ioSize = fread(oBuf, 1, ioSize, in);
+	return ioSize != 0;
+}
+
 bool file::write_short_be(short s)
 {
 	unsigned char tmp[2];

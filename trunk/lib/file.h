@@ -24,6 +24,7 @@ public:
 	bool read_int_le(unsigned &, unsigned * = NULL);
 	bool read_int_be(unsigned &, unsigned * = NULL);
 	bool read_float_be(double &, unsigned * = NULL);
+	bool read_raw(void *oBuf, unsigned &ioSize);
 	// Writing.
 	bool write_short_be(short);
 	bool write_short_le(short);

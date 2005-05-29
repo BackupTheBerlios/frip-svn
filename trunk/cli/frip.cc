@@ -17,26 +17,47 @@ static const char *usagemsg =
 
 static void show_stat(unsigned int percentage)
 {
-	fprintf(stdout, "      done: %u%%    \r", percentage);
+	static unsigned rot = 0;
+	const char *pgs = "XXXXXXXXXXXXXXXXXXXX....................";
+	const char pgt[] = "tHe rEvOlUtIoN wIlL bE sYnThEsIzEd-+-+";
+
+	if (percentage != 100) {
+		char tmp[21];
+
+		strncpy(tmp, pgs + 20 - (percentage / 5), 20);
+		tmp[20] = 0;
+
+		fprintf(stdout, "      done: %u%% (%20s) (%c)    \r", percentage, tmp, pgt[rot++ % (sizeof(pgt) - 1)]);
+	} else {
+		fprintf(stdout, "      done: 100%%                                 \r");
+	}
+
 	fflush(stdout);
 }
 
-int main(int argc, char * const * argv)
+frip::frip()
 {
-	bool verbose = true;
-	const char *logname = "stderr";
+	mVerbose = true;
+	mLogName = "frip.log";
+}
 
+frip::~frip()
+{
+}
+
+bool frip::run(int argc, char * const * argv)
+{
 	for (int ch; (ch = getopt(argc, argv, "ql:")) != -1; ) {
 		switch (ch) {
 		case 'l':
-			logname = optarg;
+			mLogName = optarg;
 			break;
 		case 'q':
-			verbose = false;
+			mVerbose = false;
 			break;
 		default:
 			fprintf(stderr, "%s", usagemsg);
-			return 1;
+			return false;
 		}
 	}
 
@@ -45,30 +66,42 @@ int main(int argc, char * const * argv)
 
 	if (argc == 0) {
 		fprintf(stdout, "%s", usagemsg);
-		return 0;
+		return false;
 	}
 
 	if (argc % 2 != 0) {
 		fprintf(stderr, "Not enough file names.\n");
-		return 1;
+		return false;
 	}
 
-	frip_set_log(logname);
+	frip_set_log(mLogName);
 
 	while (argc >= 2) {
-		if (verbose) {
+		if (mVerbose) {
 			fprintf(stdout, "Converting: %s\n        to: %s\n      done: n/a\r", argv[0], argv[1]);
 			fflush(stdout);
 		}
 
-		frip_encode(argv[0], argv[1], verbose ? show_stat : NULL);
+		do_file(argv[0], argv[1]);
 
-		if (verbose)
+		if (mVerbose)
 			fprintf(stdout, "\n");
 
 		argc -= 2;
 		argv += 2;
 	}
 
-	return 0;
+	return true;
+}
+
+bool frip::do_file(const char *src, const char *dst)
+{
+	frip_encode(src, dst, mVerbose ? show_stat : NULL);
+	return true;
+}
+
+int main(int argc, char * const * argv)
+{
+	frip f;
+	return f.run(argc, argv);
 }

@@ -17,10 +17,14 @@ static reader * mkreader(const char *fname, frip_callback cb)
 	const char *ext = strchr(fname, '.');
 
 	if (ext != NULL) {
-		if (equals(ext, ".aiff") || equals(ext, ".aif"))
+		if (equals(ext, ".aif") || equals(ext, ".aiff"))
 			return new raiff(cb);
-		else if (strcasecmp(ext, ".wav") == 0)
+		else if (equals(ext, ".wav") || equals(ext, ".wave"))
 			return new rwave(cb);
+#ifdef HAVE_flac
+		else if (equals(ext, ".flac"))
+			return new rflac(cb);
+#endif
 	}
 
 	return NULL;
@@ -35,7 +39,7 @@ static writer * mkwriter(const char *fname, const reader *r)
 			return new wraw(r);
 		else if (equals(ext, ".wav") || equals(ext, ".wave"))
 			return new wwave(r);
-		else if (equals(ext, ".aiff"))
+		else if (equals(ext, ".aif") || equals(ext, ".aiff"))
 			return new waiff(r);
 #ifdef HAVE_lame
 		else if (equals(ext, ".mp3"))
