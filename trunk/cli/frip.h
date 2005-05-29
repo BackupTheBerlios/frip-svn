@@ -3,15 +3,28 @@
 #ifndef __frip_cli_frip_h
 #define __frip_cli_frip_h
 
+#include <string>
 #include "../lib/frip.h"
+
+using std::string;
 
 class frip
 {
 	bool mVerbose;
-	const char *mLogName;
+	// Log file name.
+	string mLogName;
+	// Default file suffix.
+	string mDefaultSuffix;
 protected:
 	// Encodes a file.
-	bool do_file(const char *src, const char *dst);
+	bool do_file(string src, string dst);
+	// Encodes a directory, recursively.
+	bool do_dir(string src, string dst);
+	// Determine entry type.
+	static bool is_file(const string &);
+	static bool is_dir(const string &);
+	// Create entries.
+	static bool mkdir(const string &);
 public:
 	frip();
 	~frip();

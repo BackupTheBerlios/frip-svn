@@ -14,7 +14,7 @@ static inline bool equals(const char *a, const char *b)
 
 static reader * mkreader(const char *fname, frip_callback cb)
 {
-	const char *ext = strchr(fname, '.');
+	const char *ext = strrchr(fname, '.');
 
 	if (ext != NULL) {
 		if (equals(ext, ".aif") || equals(ext, ".aiff"))
@@ -32,7 +32,7 @@ static reader * mkreader(const char *fname, frip_callback cb)
 
 static writer * mkwriter(const char *fname, const reader *r)
 {
-	const char *ext = strchr(fname, '.');
+	const char *ext = strrchr(fname, '.');
 
 	if (ext != NULL) {
 		if (equals(ext, ".raw"))
@@ -63,12 +63,12 @@ E bool frip_encode(const char *iname, const char *oname, frip_callback cb)
 	samples smp;
 
 	if (r.get() == NULL) {
-		log("unknown input type.");
+		log("unknown input type: %s.", iname);
 		return false;
 	}
 
 	if (w.get() == NULL) {
-		log("unknown output type.");
+		log("unknown output type: %s.", oname);
 		return false;
 	}
 
