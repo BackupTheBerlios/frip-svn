@@ -80,3 +80,8 @@ lenv.Append(LIBS = 'frip.0')
 
 # The command line interface.
 cli = lenv.Program('frip', fae.compile(lenv, ['cli']))
+
+# Install everything.
+env.Alias('install', '/usr/local')
+env.Install('/usr/local/lib', lib)
+env.Install('/usr/local/bin', cli)
