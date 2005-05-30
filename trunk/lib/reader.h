@@ -7,12 +7,16 @@
 # include <FLAC++/all.h>
 #endif
 #include <stdio.h>
+#include <string>
 #include <vector>
 #include "file.h"
 #include "frip.h"
 #include "log.h"
 
+using std::string;
+
 typedef std::vector<int> samples;
+typedef std::vector< std::pair< string, string > > tagset;
 
 #define IFF_ID_FORM 0x464F524D /* "FORM" */
 #define IFF_ID_AIFF 0x41494646 /* "AIFF" */
@@ -56,6 +60,10 @@ protected:
 	unsigned mSamplesTotal;
 	// The number of remaining samples, per file.
 	unsigned mSamplesLeft;
+	// Standard tags.
+	tagset mTags;
+	// Appends a tag to the list.
+	void AddTag(const string &, const string &);
 	// Report the progress to the host application.
 	void UpdateStatus();
 public:
@@ -76,6 +84,8 @@ public:
 	unsigned GetFrameCount() const { return mSamplesTotal / mChannels; }
 	// The size of a frame, in bytes (sum of all samples in a channel).
 	unsigned GetFrameSize() const { return mSampleSize / 8 * mChannels; }
+	// Returns the value of a tag.
+	bool GetTag(const string &name, string &value) const;
 };
 
 // Base class for linear PCM formats (aiff and wav)
@@ -139,6 +149,8 @@ protected:
 	void error_callback(::FLAC__StreamDecoderErrorStatus status);
 	// reader.
 	bool read(samples &, size_t preferred_wide_sample_count);
+	// Parse a tag.
+	void add_tag(const char *);
 public:
 	rflac(frip_callback);
 	~rflac();

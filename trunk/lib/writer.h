@@ -96,6 +96,7 @@ public:
 class wlame : public writer
 {
 	lame_global_flags *mLame;
+	void set_tags();
 public:
 	wlame(const reader *);
 	~wlame();

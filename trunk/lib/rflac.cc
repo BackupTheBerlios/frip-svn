@@ -66,6 +66,15 @@ void rflac::metadata_callback(const ::FLAC__StreamMetadata *m)
 		break;
 	case FLAC__METADATA_TYPE_VORBIS_COMMENT:
 		log("rflac: vorbis comment (%u items).", m->data.vorbis_comment.num_comments);
+
+		for (unsigned int idx = 0; idx < m->data.vorbis_comment.num_comments; ++idx) {
+			const char *tag = reinterpret_cast<const char *>(m->data.vorbis_comment.comments[idx].entry);
+			const char *sep = strchr(tag, '=');
+
+			if (sep != NULL)
+				AddTag(string(tag, sep - tag), string(sep + 1));
+		}
+
 		break;
 	default:
 		log("rflac: unsupported metadata block ignored.");

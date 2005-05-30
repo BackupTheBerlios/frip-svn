@@ -11,6 +11,11 @@ wlame::wlame(const reader *r) :
 
 wlame::~wlame()
 {
+	unsigned char tmp[LAME_MAXMP3BUFFER];
+	int sz = lame_encode_finish(mLame, tmp, sizeof(tmp));
+
+	if (sz != 0)
+		out.write(tmp, sz);
 }
 
 bool wlame::open(const char *fname)
@@ -26,12 +31,36 @@ bool wlame::open(const char *fname)
 	lame_set_quality(mLame, 5);
 	lame_set_mode(mLame, STEREO);
 
+	set_tags();
+
 	if (lame_init_params(mLame) == -1) {
 		log("wlame: init_params() failed.");
 		return false;
 	}
 
 	return true;
+}
+
+void wlame::set_tags()
+{
+	string val;
+
+	id3tag_init(mLame);
+	id3tag_add_v2(mLame);
+	id3tag_pad_v2(mLame);
+
+	if (mReader->GetTag("ALBUM", val))
+		id3tag_set_album(mLame, val.c_str());
+	if (mReader->GetTag("ARTIST", val))
+		id3tag_set_artist(mLame, val.c_str());
+	if (mReader->GetTag("COMMENT", val))
+		id3tag_set_comment(mLame, val.c_str());
+	if (mReader->GetTag("DATE", val))
+		id3tag_set_year(mLame, val.c_str());
+	if (mReader->GetTag("TITLE", val))
+		id3tag_set_title(mLame, val.c_str());
+	if (mReader->GetTag("TRACKNUMBER", val))
+		id3tag_set_track(mLame, val.c_str());
 }
 
 bool wlame::write(samples &smp)
