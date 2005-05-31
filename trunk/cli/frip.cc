@@ -26,16 +26,16 @@ static void show_stat(int percentage)
 	const char pgt[] = "tHe rEvOlUtIoN wIlL bE sYnThEsIzEd-+-+";
 
 	if (percentage < 0) {
-		fprintf(stdout, "      done: failed.                                \r");
+		fprintf(stdout, "    status: failed.                                \r");
 	} else if (percentage != 100) {
 		char tmp[21];
 
 		strncpy(tmp, pgs + 20 - (percentage / 5), 20);
 		tmp[20] = 0;
 
-		fprintf(stdout, "      done: %u%% (%20s) (%c)    \r", percentage, tmp, pgt[rot++ % (sizeof(pgt) - 1)]);
+		fprintf(stdout, "    status: %u%% (%20s) (%c)    \r", percentage, tmp, pgt[rot++ % (sizeof(pgt) - 1)]);
 	} else {
-		fprintf(stdout, "      done: 100%%                                 \r");
+		fprintf(stdout, "    status: done.                                 \r");
 	}
 
 	fflush(stdout);
@@ -107,7 +107,20 @@ bool frip::do_file(string src, string dst)
 	bool rc;
 
 	if (mVerbose) {
-		fprintf(stdout, "Converting: %s\n        to: %s\n      done: n/a\r", src.c_str(), dst.c_str());
+		const char *tsrc = strrchr(src.c_str(), '/');
+		const char *tdst = strrchr(dst.c_str(), '/');
+
+		if (tsrc == NULL)
+			tsrc = src.c_str();
+		else
+			++tsrc;
+
+		if (tdst == NULL)
+			tdst = dst.c_str();
+		else
+			++tdst;
+
+		fprintf(stdout, "Converting: %s\n        to: %s\n      done: n/a\r", tsrc, tdst);
 		fflush(stdout);
 	}
 
