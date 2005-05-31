@@ -7,15 +7,18 @@ wlame::wlame(const reader *r) :
 	writer(r)
 {
 	mLame = lame_init();
+	mReady = false;
 }
 
 wlame::~wlame()
 {
-	unsigned char tmp[LAME_MAXMP3BUFFER];
-	int sz = lame_encode_finish(mLame, tmp, sizeof(tmp));
+	if (mReady) {
+		unsigned char tmp[LAME_MAXMP3BUFFER];
+		int sz = lame_encode_finish(mLame, tmp, sizeof(tmp));
 
-	if (sz != 0)
-		out.write(tmp, sz);
+		if (sz != 0)
+			out.write(tmp, sz);
+	}
 }
 
 bool wlame::open(const char *fname)
@@ -38,7 +41,7 @@ bool wlame::open(const char *fname)
 		return false;
 	}
 
-	return true;
+	return (mReady = true);
 }
 
 void wlame::set_tags()

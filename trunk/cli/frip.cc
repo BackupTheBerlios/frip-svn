@@ -19,13 +19,15 @@ static const char *usagemsg =
 	"Send your bug reports to justin.forest@gmail.com\n"
 	"";
 
-static void show_stat(unsigned int percentage)
+static void show_stat(int percentage)
 {
 	static unsigned rot = 0;
 	const char *pgs = "XXXXXXXXXXXXXXXXXXXX....................";
 	const char pgt[] = "tHe rEvOlUtIoN wIlL bE sYnThEsIzEd-+-+";
 
-	if (percentage != 100) {
+	if (percentage < 0) {
+		fprintf(stdout, "      done: failed.                                \r");
+	} else if (percentage != 100) {
 		char tmp[21];
 
 		strncpy(tmp, pgs + 20 - (percentage / 5), 20);
@@ -102,15 +104,19 @@ bool frip::run(int argc, char * const * argv)
 
 bool frip::do_file(string src, string dst)
 {
+	bool rc;
+
 	if (mVerbose) {
 		fprintf(stdout, "Converting: %s\n        to: %s\n      done: n/a\r", src.c_str(), dst.c_str());
 		fflush(stdout);
 	}
 
-	frip_encode(src.c_str(), dst.c_str(), mVerbose ? show_stat : NULL);
+	rc = frip_encode(src.c_str(), dst.c_str(), mVerbose ? show_stat : NULL);
 
-	if (mVerbose)
+	if (mVerbose) {
+		show_stat(rc ? 100 : -1);
 		fprintf(stdout, "\n");
+	}
 
 	return true;
 }

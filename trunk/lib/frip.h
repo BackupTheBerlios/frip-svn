@@ -10,7 +10,7 @@
 # define bool int
 #endif
 
-typedef void (*frip_callback)(unsigned int percent);
+typedef void (*frip_callback)(int percent);
 
 E bool frip_encode(const char *iname, const char *oname, frip_callback);
 E void frip_set_log(const char *);

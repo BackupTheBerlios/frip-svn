@@ -97,6 +97,8 @@ class wlame : public writer
 {
 	lame_global_flags *mLame;
 	void set_tags();
+	// Set when the file is ready for writing.
+	bool mReady;
 public:
 	wlame(const reader *);
 	~wlame();
