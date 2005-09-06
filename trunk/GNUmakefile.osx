@@ -1,0 +1,24 @@
+CLI = frip
+CLIO = $(patsubst %.cc,%.o,$(wildcard cli/*.cc))
+LIB = frip.1
+LIBO = $(patsubst %.cc,%.o,$(wildcard lib/*.cc))
+CXXFLAGS += -O2 -fomit-frame-pointer -fno-rtti -Wall -Werror -DVERSION="1.0" -DHAVE_getopt -DHAVE_flac -DHAVE_lame
+
+all: lib$(LIB).dylib $(CLI)
+
+clean:
+	find . -type f -name '*.o' | xargs rm -f
+	rm -f $(CLI) lib$(LIB).dylib
+
+install: all
+	sudo install -D lib$(LIB).dylib /usr/local/lib/lib$(LIB).dylib
+	sudo install -D $(CLI) /usr/local/bin/$(CLI)
+
+lib$(LIB).dylib: $(LIBO)
+	$(CC) $(strip -dynamiclib -Wl,-Sn -o $@ $(LIBO) -lmp3lame -lFLAC -lFLAC++ -lstdc++)
+
+$(CLI): $(CLIO)
+	$(CC) -Wl,-Sn -o $@ -L. $(CLIO) -l$(LIB) -lstdc++
+
+%.o: %.cc
+	$(CC) $(strip -x c++ $(CXXFLAGS) -o $@ -c $<)

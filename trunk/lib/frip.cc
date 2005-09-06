@@ -56,7 +56,7 @@ static writer * mkwriter(const char *fname, const reader *r)
 	return NULL;
 }
 
-E bool frip_encode(const char *iname, const char *oname, frip_callback cb)
+E bool frip_encode(const char *iname, const char *oname, int quality, frip_callback cb)
 {
 	std::auto_ptr<reader> r(mkreader(iname, cb));
 	std::auto_ptr<writer> w(mkwriter(oname, r.get()));

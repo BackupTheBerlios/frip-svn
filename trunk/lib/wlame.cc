@@ -23,6 +23,10 @@ wlame::~wlame()
 
 bool wlame::open(const char *fname)
 {
+#ifdef LAME_USES_VBR
+	int qs[10] = { 64, 80, 96, 112, 128, 160, 192, 224, 256, 320 };
+#endif
+
 	if (!writer::open(fname))
 		return false;
 
@@ -31,8 +35,14 @@ bool wlame::open(const char *fname)
 
 	lame_set_in_samplerate(mLame, mReader->GetSampleRate());
 	lame_set_num_channels(mLame, mReader->GetChannels());
-	lame_set_quality(mLame, 5);
+	lame_set_quality(mLame, 2);
 	lame_set_mode(mLame, STEREO);
+#ifdef LAME_USES_VBR
+	lame_set_VBR(mLame, vbr_abr);
+	lame_set_VBR_q(mLame, 9);
+	lame_set_VBR_min_bitrate_kbps(mLame, 32);
+	lame_set_VBR_max_bitrate_kbps(mLame, qs[mQuality]);
+#endif
 
 	set_tags();
 

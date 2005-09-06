@@ -1,6 +1,7 @@
 // $Id$
 
 #include <dirent.h>
+#include <libgen.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <string.h>
@@ -13,7 +14,9 @@ static const char *usagemsg =
 	"\n"
 	"Options:\n"
 	"  -l name : write conversion log to the named file\n"
-	"  -q      : do not show conversion progress\n"
+	"  -Q      : do not show conversion progress\n"
+	"  -q val  : set output quality (float, deafults to 0.5)\n"
+	"  -r      : recurse directories\n"
 	"  -s ext  : target encoding when processing directories recursively\n"
 	"\n"
 	"Send your bug reports to justin.forest@gmail.com\n"
@@ -21,9 +24,7 @@ static const char *usagemsg =
 
 static void show_stat(int percentage)
 {
-	static unsigned rot = 0;
 	const char *pgs = "XXXXXXXXXXXXXXXXXXXX....................";
-	const char pgt[] = "tHe rEvOlUtIoN wIlL bE sYnThEsIzEd-+-+";
 
 	if (percentage < 0) {
 		fprintf(stdout, "    status: failed.                                \r");
@@ -33,7 +34,7 @@ static void show_stat(int percentage)
 		strncpy(tmp, pgs + 20 - (percentage / 5), 20);
 		tmp[20] = 0;
 
-		fprintf(stdout, "    status: %u%% (%20s) (%c)    \r", percentage, tmp, pgt[rot++ % (sizeof(pgt) - 1)]);
+		fprintf(stdout, "    status: %u%% (%20s)    \r", percentage, tmp);
 	} else {
 		fprintf(stdout, "    status: done.                                 \r");
 	}
@@ -46,6 +47,8 @@ frip::frip()
 	mVerbose = true;
 	mLogName = "frip.log";
 	mDefaultSuffix = "mp3";
+	mQuality = 5;
+	mRecurse = false;
 }
 
 frip::~frip()
@@ -54,13 +57,23 @@ frip::~frip()
 
 bool frip::run(int argc, char * const * argv)
 {
-	for (int ch; (ch = getopt(argc, argv, "l:qs:")) != -1; ) {
+	/*
+	bool prq = true;
+	*/
+
+	for (int ch; (ch = getopt(argc, argv, "l:Qq:rs:")) != -1; ) {
 		switch (ch) {
 		case 'l':
 			mLogName = optarg;
 			break;
-		case 'q':
+		case 'Q':
 			mVerbose = false;
+			break;
+		case 'q':
+			mQuality = static_cast<int>(atoi(optarg));
+			break;
+		case 'r':
+			mRecurse = true;
 			break;
 		case 's':
 			mDefaultSuffix = optarg;
@@ -87,9 +100,21 @@ bool frip::run(int argc, char * const * argv)
 	frip_set_log(mLogName.c_str());
 
 	while (argc >= 2) {
+		/*
+		if (prq) {
+			fprintf(stdout, "Quality: %d\n", mQuality);
+			prq = false;
+		}
+		*/
+
 		if (is_file(argv[0])) {
 			do_file(argv[0], argv[1]);
 		} else if (is_dir(argv[0])) {
+			if (!mRecurse) {
+				fprintf(stderr, "Please specify the -r switch to convert directories.\n");
+				return false;
+			}
+
 			do_dir(argv[0], argv[1]);
 		} else {
 			fprintf(stderr, "Unknown node type: %s, skipped.\n", argv[0]);
@@ -124,7 +149,7 @@ bool frip::do_file(string src, string dst)
 		fflush(stdout);
 	}
 
-	rc = frip_encode(src.c_str(), dst.c_str(), mVerbose ? show_stat : NULL);
+	rc = frip_encode(src.c_str(), dst.c_str(), mQuality, mVerbose ? show_stat : NULL);
 
 	if (mVerbose) {
 		show_stat(rc ? 100 : -1);
@@ -138,6 +163,9 @@ bool frip::do_dir(string src, string dst)
 {
 	DIR *d;
 	dirent *e;
+
+	if (strcmp(dst.c_str(), ".") == 0)
+		dst = basename(src.c_str());
 
 	if (is_dir(dst)) {
 		;

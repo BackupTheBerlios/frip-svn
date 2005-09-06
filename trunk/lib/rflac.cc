@@ -68,11 +68,12 @@ void rflac::metadata_callback(const ::FLAC__StreamMetadata *m)
 		log("rflac: vorbis comment (%u items).", m->data.vorbis_comment.num_comments);
 
 		for (unsigned int idx = 0; idx < m->data.vorbis_comment.num_comments; ++idx) {
-			const char *tag = reinterpret_cast<const char *>(m->data.vorbis_comment.comments[idx].entry);
+			FLAC__StreamMetadata_VorbisComment_Entry &e = m->data.vorbis_comment.comments[idx];
+			const char *tag = reinterpret_cast<const char *>(e.entry);
 			const char *sep = strchr(tag, '=');
 
 			if (sep != NULL)
-				AddTag(string(tag, sep - tag), string(sep + 1));
+				AddTag(string(tag, sep - tag), string(sep + 1, e.length - (sep - tag) - 1));
 		}
 
 		break;

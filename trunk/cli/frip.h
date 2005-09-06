@@ -15,6 +15,10 @@ class frip
 	string mLogName;
 	// Default file suffix.
 	string mDefaultSuffix;
+	// Output quality.
+	int mQuality;
+	// Recurse into directories.
+	bool mRecurse;
 protected:
 	// Encodes a file.
 	bool do_file(string src, string dst);

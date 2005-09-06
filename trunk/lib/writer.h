@@ -18,12 +18,14 @@ protected:
 	file out;
 	const reader *mReader;
 	unsigned mSampleSize;
+	int mQuality;
 public:
 	writer(const reader *);
 	virtual ~writer();
 	virtual bool write(samples &smp) = 0;
 	virtual bool open(const char *fname);
 	virtual const char * name() const = 0;
+	virtual void set_quality(int);
 };
 
 class wraw : public writer
