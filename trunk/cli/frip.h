@@ -13,6 +13,8 @@ class frip
 	bool mVerbose;
 	// Log file name.
 	string mLogName;
+	// Prefix filter.
+	string mFilter;
 	// Default file suffix.
 	string mDefaultSuffix;
 	// Output quality.
@@ -29,6 +31,8 @@ protected:
 	static bool is_dir(const string &);
 	// Create entries.
 	static bool mkdir(const string &);
+	// Checks whether a file passes the filters.
+	bool passes(const string &) const;
 public:
 	frip();
 	~frip();

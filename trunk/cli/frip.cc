@@ -13,11 +13,12 @@ static const char *usagemsg =
 	"Usage: frip [options] [in out [...]]\n"
 	"\n"
 	"Options:\n"
+	"  -d ext  : target encoding when processing directories recursively\n"
 	"  -l name : write conversion log to the named file\n"
 	"  -Q      : do not show conversion progress\n"
-	"  -q val  : set output quality (float, deafults to 0.5)\n"
+	"  -q val  : set output quality (float, defaults to 0.5)\n"
 	"  -r      : recurse directories\n"
-	"  -s ext  : target encoding when processing directories recursively\n"
+	"  -s ext  : only process input files with this suffix\n"
 	"\n"
 	"Send your bug reports to justin.forest@gmail.com\n"
 	"";
@@ -55,14 +56,37 @@ frip::~frip()
 {
 }
 
+bool frip::passes(const string &fn) const
+{
+	if (mFilter.length() == 0)
+		return true;
+
+	if (fn.length() < mFilter.length()) {
+		if (mVerbose)
+			printf("  - \"%s\" != \"%s\"\n", fn.c_str(), mFilter.c_str());
+		return false;
+	}
+
+	if (fn.compare(fn.length() - mFilter.length(), mFilter.length(), mFilter) != 0) {
+		if (mVerbose)
+			printf("  - \"%s\" != \"%s\"\n", fn.c_str(), mFilter.c_str());
+		return false;
+	}
+	
+	return true;
+}
+
 bool frip::run(int argc, char * const * argv)
 {
 	/*
 	bool prq = true;
 	*/
 
-	for (int ch; (ch = getopt(argc, argv, "l:Qq:rs:")) != -1; ) {
+	for (int ch; (ch = getopt(argc, argv, "d:l:Qq:rs:")) != -1; ) {
 		switch (ch) {
+		case 'd':
+			mDefaultSuffix = optarg;
+			break;
 		case 'l':
 			mLogName = optarg;
 			break;
@@ -76,7 +100,7 @@ bool frip::run(int argc, char * const * argv)
 			mRecurse = true;
 			break;
 		case 's':
-			mDefaultSuffix = optarg;
+			mFilter = optarg;
 			break;
 		default:
 			fprintf(stderr, "%s", usagemsg);
@@ -130,6 +154,9 @@ bool frip::run(int argc, char * const * argv)
 bool frip::do_file(string src, string dst)
 {
 	bool rc;
+
+	if (!passes(src))
+		return true;
 
 	if (mVerbose) {
 		const char *tsrc = strrchr(src.c_str(), '/');
