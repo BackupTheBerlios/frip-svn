@@ -1,7 +1,7 @@
 // $Id$
 
 #ifdef HAVE_lame
-#include "writer.h"
+#include "all.h"
 
 wlame::wlame(const reader *r) :
 	writer(r)

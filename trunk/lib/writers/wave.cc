@@ -1,6 +1,6 @@
 // $Id$
 
-#include "writer.h"
+#include "all.h"
 
 wwave::wwave(const reader *r) :
 	writer(r)

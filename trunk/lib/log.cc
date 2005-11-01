@@ -19,7 +19,7 @@ void log(const char *format, ...)
 	}
 }
 
-E void frip_set_log(const char *fname)
+void frip_set_log(const char *fname)
 {
 	if (out != NULL && out != stderr && out != stdout)
 		fclose(out);

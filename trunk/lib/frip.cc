@@ -4,8 +4,8 @@
 #include <string.h>
 #include "frip.h"
 #include "log.h"
-#include "reader.h"
-#include "writer.h"
+#include "readers/all.h"
+#include "writers/all.h"
 
 static inline bool equals(const char *a, const char *b)
 {
@@ -56,7 +56,7 @@ static writer * mkwriter(const char *fname, const reader *r)
 	return NULL;
 }
 
-E bool frip_encode(const char *iname, const char *oname, int quality, frip_callback cb)
+bool frip_encode(const char *iname, const char *oname, int quality, mixtype_t mix, frip_callback cb)
 {
 	std::auto_ptr<reader> r(mkreader(iname, cb));
 	std::auto_ptr<writer> w(mkwriter(oname, r.get()));

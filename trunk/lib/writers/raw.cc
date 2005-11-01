@@ -1,6 +1,6 @@
 // $Id$
 
-#include "writer.h"
+#include "all.h"
 
 wraw::wraw(const reader *r) :
 	writer(r)

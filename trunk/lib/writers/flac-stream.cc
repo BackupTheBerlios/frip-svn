@@ -1,7 +1,7 @@
 // $Id$
 
 #ifdef HAVE_flac
-#include "writer.h"
+#include "all.h"
 
 wflacs::wflacs(const reader *r) :
 	writer(r)

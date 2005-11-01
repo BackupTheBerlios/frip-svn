@@ -1,6 +1,6 @@
 // $Id$
 
-#include "reader.h"
+#include "all.h"
 
 reader::reader(frip_callback cb)
 {

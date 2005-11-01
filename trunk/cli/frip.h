@@ -21,6 +21,8 @@ class frip
 	int mQuality;
 	// Recurse into directories.
 	bool mRecurse;
+	// Mix channels.
+	mixtype_t mMixType;
 protected:
 	// Encodes a file.
 	bool do_file(string src, string dst);

@@ -1,6 +1,6 @@
 // $Id$
 
-#include "reader.h"
+#include "all.h"
 
 rwave::rwave(frip_callback cb) :
 	rpcm(cb)

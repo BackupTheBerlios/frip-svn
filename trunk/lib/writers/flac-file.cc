@@ -1,7 +1,7 @@
 // $Id$
 
 #ifdef HAVE_flac
-#include "writer.h"
+#include "all.h"
 
 wflacf::wflacf(const reader *r) :
 	writer(r)
@@ -31,6 +31,11 @@ bool wflacf::write(samples &smp)
 
 bool wflacf::open(const char *fname)
 {
+	// encoder settings.
+	bool midLoose = false, midSide = false, exModel = false;
+	int lpcOrder = 0, blockSize = 1152;
+	int resMin = 0, resMax = 0;
+
 	if (!writer::open(fname))
 		return false;
 
@@ -49,7 +54,60 @@ bool wflacf::open(const char *fname)
 		return false;
 	}
 
-	if (!set_blocksize(4608)) {
+	switch (mQuality) {
+	case 0:
+		resMin = resMax = 2;
+		break;
+	case 1:
+		resMin = resMax = 2;
+		midLoose = true;
+		break;
+	case 2:
+		resMax = 3;
+		midSide = true;
+		break;
+	case 3:
+		lpcOrder = 6;
+		blockSize = 4608;
+		resMin = resMax = 3;
+		break;
+	case 4:
+		lpcOrder = 8;
+		blockSize = 4608;
+		resMin = resMax = 3;
+		midLoose = true;
+		break;
+	case 5:
+		lpcOrder = 8;
+		blockSize = 4608;
+		resMin = resMax = 3;
+		midSide = true;
+		break;
+	case 6:
+		lpcOrder = 8;
+		blockSize = 4608;
+		resMax = 4;
+		midSide = true;
+		break;
+	case 7:
+		lpcOrder = 8;
+		blockSize = 4608;
+		resMax = 6;
+		midSide = true;
+		exModel = true;
+		break;
+	case 8:
+		lpcOrder = 12;
+		blockSize = 4608;
+		resMax = 6;
+		midSide = true;
+		exModel = true;
+		break;
+	}
+
+	set_do_exhaustive_model_search(true);
+
+	if (!set_blocksize(blockSize)) {
 		log("wflacf: could not set blocksize.");
 		return false;
 	}
@@ -60,18 +118,18 @@ bool wflacf::open(const char *fname)
 	}
 
 	if (mReader->GetChannels() == 2) {
-		if (!set_do_mid_side_stereo(true)) {
+		if (!set_do_mid_side_stereo(midSide)) {
 			log("wflacf: could not set do_mid_side_stereo.");
 			return false;
 		}
 
-		if (!set_loose_mid_side_stereo(true)) {
+		if (!set_loose_mid_side_stereo(midLoose)) {
 			log("wflacf: could not set loose_mid_side_stereo.");
 			return false;
 		}
 	}
 
-	if (!set_do_exhaustive_model_search(true)) {
+	if (!set_do_exhaustive_model_search(exModel)) {
 		log("wflacf: could not set do_exhaustive_model_search.");
 		return false;
 	}
@@ -86,17 +144,17 @@ bool wflacf::open(const char *fname)
 		return false;
 	}
 
-	if (!set_min_residual_partition_order(0)) {
+	if (!set_min_residual_partition_order(resMin)) {
 		log("wlac: could not set min_residual_partition_order in the output stream.");
 		return false;
 	}
 
-	if (!set_max_residual_partition_order(6)) {
+	if (!set_max_residual_partition_order(resMax)) {
 		log("wflacf: could not set max_residual_partition_order in the output stream.");
 		return false;
 	}
 
-	if (!set_max_lpc_order(12)) {
+	if (!set_max_lpc_order(lpcOrder)) {
 		log("wflacf: could not set max_lpc_order in the output stream.");
 		return false;
 	}

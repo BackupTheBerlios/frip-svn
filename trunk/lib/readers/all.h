@@ -6,17 +6,8 @@
 #ifdef HAVE_flac
 # include <FLAC++/all.h>
 #endif
-#include <stdio.h>
-#include <string>
-#include <vector>
-#include "file.h"
-#include "frip.h"
-#include "log.h"
-
-using std::string;
-
-typedef std::vector<int> samples;
-typedef std::vector< std::pair< string, string > > tagset;
+#include "../fripint.h"
+#include "../file.h"
 
 #define IFF_ID_FORM 0x464F524D /* "FORM" */
 #define IFF_ID_AIFF 0x41494646 /* "AIFF" */

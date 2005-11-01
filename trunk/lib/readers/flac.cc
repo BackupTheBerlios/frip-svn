@@ -5,7 +5,7 @@
 #include <FLAC++/all.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include "reader.h"
+#include "all.h"
 
 rflac::rflac(frip_callback cb) :
 	reader(cb)

@@ -1,6 +1,6 @@
 // $Id$
 
-#include "reader.h"
+#include "all.h"
 
 rpcm::rpcm(frip_callback cb) :
 	reader(cb)

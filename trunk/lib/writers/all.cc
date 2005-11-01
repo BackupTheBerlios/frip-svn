@@ -1,11 +1,12 @@
 // $Id$
 
-#include "writer.h"
+#include "all.h"
 
 writer::writer(const reader *r)
 {
 	mReader = r;
 	mQuality = 5;
+	mMixType = mtNone;
 }
 
 writer::~writer()
@@ -27,4 +28,9 @@ void writer::set_quality(int q)
 	if (q < 0)
 		q = 0;
 	mQuality = q;
+}
+
+void writer::set_mix_type(mixtype_t mt)
+{
+	mMixType = mt;
 }

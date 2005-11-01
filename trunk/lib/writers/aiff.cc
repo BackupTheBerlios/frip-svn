@@ -1,6 +1,6 @@
 // $Id$
 
-#include "writer.h"
+#include "all.h"
 
 waiff::waiff(const reader *r) :
 	writer(r)

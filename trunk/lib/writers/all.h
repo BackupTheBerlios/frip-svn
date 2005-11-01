@@ -9,8 +9,8 @@
 #ifdef HAVE_lame
 # include <lame/lame.h>
 #endif
-#include "file.h"
-#include "reader.h"
+#include "../file.h"
+#include "../readers/all.h"
 
 class writer
 {
@@ -19,6 +19,7 @@ protected:
 	const reader *mReader;
 	unsigned mSampleSize;
 	int mQuality;
+	int mMixType;
 public:
 	writer(const reader *);
 	virtual ~writer();
@@ -26,6 +27,7 @@ public:
 	virtual bool open(const char *fname);
 	virtual const char * name() const = 0;
 	virtual void set_quality(int);
+	virtual void set_mix_type(mixtype_t);
 };
 
 class wraw : public writer

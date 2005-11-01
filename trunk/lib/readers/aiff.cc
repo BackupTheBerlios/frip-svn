@@ -1,6 +1,6 @@
 // $Id$
 
-#include "reader.h"
+#include "all.h"
 
 raiff::raiff(frip_callback cb) :
 	rpcm(cb)

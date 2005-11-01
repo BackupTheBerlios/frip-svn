@@ -13,12 +13,13 @@ static const char *usagemsg =
 	"Usage: frip [options] [in out [...]]\n"
 	"\n"
 	"Options:\n"
-	"  -d ext  : target encoding when processing directories recursively\n"
-	"  -l name : write conversion log to the named file\n"
-	"  -Q      : do not show conversion progress\n"
-	"  -q val  : set output quality (float, defaults to 0.5)\n"
-	"  -r      : recurse directories\n"
-	"  -s ext  : only process input files with this suffix\n"
+	"  -d ext     : target encoding when processing directories recursively\n"
+	"  -l name    : write conversion log to the named file\n"
+	"  -m channel : downmix to one channels (left, right)\n"
+	"  -Q         : do not show conversion progress\n"
+	"  -q val     : set output quality (float, defaults to 0.5)\n"
+	"  -r         : recurse directories\n"
+	"  -s ext     : only process input files with this suffix\n"
 	"\n"
 	"Send your bug reports to justin.forest@gmail.com\n"
 	"";
@@ -50,6 +51,7 @@ frip::frip()
 	mDefaultSuffix = "mp3";
 	mQuality = 5;
 	mRecurse = false;
+	mMixType = mtNone;
 }
 
 frip::~frip()
@@ -78,11 +80,7 @@ bool frip::passes(const string &fn) const
 
 bool frip::run(int argc, char * const * argv)
 {
-	/*
-	bool prq = true;
-	*/
-
-	for (int ch; (ch = getopt(argc, argv, "d:l:Qq:rs:")) != -1; ) {
+	for (int ch; (ch = getopt(argc, argv, "d:l:m:Qq:rs:")) != -1; ) {
 		switch (ch) {
 		case 'd':
 			mDefaultSuffix = optarg;
@@ -90,6 +88,19 @@ bool frip::run(int argc, char * const * argv)
 		case 'l':
 			mLogName = optarg;
 			break;
+		case 'm':
+			if (strcmp(optarg, "none") == 0)
+				mMixType = mtNone;
+			if (strcmp(optarg, "left") == 0)
+				mMixType = mtLeft;
+			else if (strcmp(optarg, "right") == 0)
+				mMixType = mtRight;
+			else if (strcmp(optarg, "both") == 0)
+				mMixType = mtBoth;
+			else {
+				fprintf(stderr, "Unsupported -m argument, supported values are: none, left, right, both.\n");
+				return false;
+			}
 		case 'Q':
 			mVerbose = false;
 			break;
@@ -124,13 +135,6 @@ bool frip::run(int argc, char * const * argv)
 	frip_set_log(mLogName.c_str());
 
 	while (argc >= 2) {
-		/*
-		if (prq) {
-			fprintf(stdout, "Quality: %d\n", mQuality);
-			prq = false;
-		}
-		*/
-
 		if (is_file(argv[0])) {
 			do_file(argv[0], argv[1]);
 		} else if (is_dir(argv[0])) {
@@ -172,11 +176,11 @@ bool frip::do_file(string src, string dst)
 		else
 			++tdst;
 
-		fprintf(stdout, "Converting: %s\n        to: %s\n      done: n/a\r", tsrc, tdst);
+		fprintf(stdout, "Converting: %s\n        to: %s (%d)\n      done: n/a\r", tsrc, tdst, mQuality);
 		fflush(stdout);
 	}
 
-	rc = frip_encode(src.c_str(), dst.c_str(), mQuality, mVerbose ? show_stat : NULL);
+	rc = frip_encode(src.c_str(), dst.c_str(), mQuality, mMixType, mVerbose ? show_stat : NULL);
 
 	if (mVerbose) {
 		show_stat(rc ? 100 : -1);

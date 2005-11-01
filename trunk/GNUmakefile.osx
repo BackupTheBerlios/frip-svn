@@ -1,7 +1,7 @@
 CLI = frip
 CLIO = $(patsubst %.cc,%.o,$(wildcard cli/*.cc))
 LIB = frip.1
-LIBO = $(patsubst %.cc,%.o,$(wildcard lib/*.cc))
+LIBO = $(patsubst %.cc,%.o,$(wildcard lib/*.cc) $(wildcard lib/filters/*.cc) $(wildcard lib/readers/*.cc) $(wildcard lib/writers/*.cc))
 CXXFLAGS += -O2 -fomit-frame-pointer -fno-rtti -Wall -Werror -DVERSION="1.0" -DHAVE_getopt -DHAVE_flac -DHAVE_lame
 
 all: lib$(LIB).dylib $(CLI)
@@ -9,6 +9,8 @@ all: lib$(LIB).dylib $(CLI)
 clean:
 	find . -type f -name '*.o' | xargs rm -f
 	rm -f $(CLI) lib$(LIB).dylib
+
+rebuild: clean all
 
 install: all
 	sudo install -D lib$(LIB).dylib /usr/local/lib/lib$(LIB).dylib
