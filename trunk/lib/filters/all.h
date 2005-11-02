@@ -10,8 +10,8 @@ class filter
 public:
 	filter(const char *) { }
 	virtual ~filter() { }
-	virtual const char * GetName() = 0;
-	virtual void process(samples &, const flowspec &) = 0;
+	virtual const char * GetName() const = 0;
+	virtual void process(flowspec &, samples &) = 0;
 };
 
 class downmix : public filter
@@ -21,11 +21,13 @@ class downmix : public filter
 		mtLeft,
 		mtRight,
 		mtBoth,
+		mtBlur,
 	} mMixType;
 public:
 	downmix(const char *);
 	~downmix();
-	void process(samples &, const flowspec &);
+	const char * GetName() const;
+	void process(flowspec &, samples &);
 };
 
 #endif

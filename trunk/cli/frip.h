@@ -4,6 +4,7 @@
 #define __frip_cli_frip_h
 
 #include <string>
+#include <map>
 #include "../lib/frip.h"
 
 using std::string;
@@ -21,8 +22,9 @@ class frip
 	int mQuality;
 	// Recurse into directories.
 	bool mRecurse;
-	// Mix channels.
-	mixtype_t mMixType;
+	// Filters.
+	typedef std::map<std::string, std::string> filters;
+	filters mFilters;
 protected:
 	// Encodes a file.
 	bool do_file(string src, string dst);

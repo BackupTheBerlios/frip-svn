@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <string>
+#include <list>
 #include <vector>
 #include "frip.h"
 #include "log.h"
@@ -48,6 +49,22 @@ public:
 	fripex() { }
 	virtual ~fripex() { }
 	virtual const std::string & str() const = 0;
+};
+
+class ruler
+{
+	typedef std::list<class filter *> filters;
+	class reader *mReader;
+	class writer *mWriter;
+	filters mFilters;
+	std::string mNameIn, mNameOut;
+public:
+	ruler(const char *iname, const char *oname);
+	~ruler();
+	void set_log(const char *);
+	void set_quality(int);
+	void add_filter(const char *name, const char *arg);
+	void run();
 };
 
 #endif

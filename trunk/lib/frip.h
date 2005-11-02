@@ -5,14 +5,11 @@
 
 typedef void (*frip_callback)(int percent);
 
-typedef enum {
-	mtNone,
-	mtBoth,
-	mtLeft,
-	mtRight,
-} mixtype_t;
-
-bool frip_encode(const char *iname, const char *oname, int quality, mixtype_t mix, frip_callback);
-void frip_set_log(const char *);
+void * frip_create(const char *iname, const char *oname);
+void frip_set_quality(void *, int);
+void frip_set_log(void *, const char *);
+void frip_set_filter(void *, const char *name, const char *args);
+void frip_run(void *);
+void frip_finish(void **);
 
 #endif
