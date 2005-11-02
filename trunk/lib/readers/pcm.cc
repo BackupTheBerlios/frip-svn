@@ -16,7 +16,7 @@ bool rpcm::read(samples &smp, size_t count)
 {
 	size_t osize = smp.size();
 
-	count *= mChannels;
+	count *= mFlowSpec.mChannels;
 
 	if (count > mSamplesLeft)
 		count = mSamplesLeft;
@@ -26,7 +26,7 @@ bool rpcm::read(samples &smp, size_t count)
 		return false;
 	}
 
-	if (count % mChannels != 0) {
+	if (count % mFlowSpec.mChannels != 0) {
 		log("rpcm: incomplete samples (%u), reading aborted.", count);
 		return false;
 	}
@@ -35,7 +35,7 @@ bool rpcm::read(samples &smp, size_t count)
 
 	if (mLittleEndian) {
 		for (samples::iterator it = smp.begin() + osize; it != smp.end(); ++it) {
-			if (mSampleSize == 16) {
+			if (mFlowSpec.mSampleSize == 16) {
 				short tmp;
 
 				if (!in.read_short_le(tmp, &mChunkSize)) {
@@ -48,7 +48,7 @@ bool rpcm::read(samples &smp, size_t count)
 		}
 	} else {
 		for (samples::iterator it = smp.begin() + osize; it != smp.end(); ++it) {
-			if (mSampleSize == 16) {
+			if (mFlowSpec.mSampleSize == 16) {
 				short tmp;
 
 				if (!in.read_short_be(tmp, &mChunkSize)) {

@@ -1,4 +1,13 @@
 // $Id$
+//
+// Writer declaration.  The way it works is:
+//
+// 1. You create an instance of a "writer" subclass.
+//    Usually this leads to no visible result, like
+//    creation of files or anything else.
+//
+// 2. You call write().  If the file is not open yet,
+//    it will open.  Then the data is written.
 
 #ifndef __writer_h
 #define __writer_h
@@ -9,54 +18,69 @@
 #ifdef HAVE_lame
 # include <lame/lame.h>
 #endif
+#include "../fripint.h"
 #include "../file.h"
-#include "../readers/all.h"
+
+class werr : public fripex
+{
+	std::string mText;
+public:
+	werr(const std::string &msg);
+	~werr() { }
+	const std::string& str() const { return mText; }
+};
 
 class writer
 {
 protected:
-	file out;
-	const reader *mReader;
-	unsigned mSampleSize;
 	int mQuality;
-	int mMixType;
+	flowspec mFlowSpec;
 public:
-	writer(const reader *);
+	writer();
 	virtual ~writer();
-	virtual bool write(samples &smp) = 0;
-	virtual bool open(const char *fname);
+	virtual void write(const flowspec &fs, samples &smp) = 0;
 	virtual const char * name() const = 0;
 	virtual void set_quality(int);
-	virtual void set_mix_type(mixtype_t);
 };
 
 class wraw : public writer
 {
+	std::string mFileName;
+	file mOut;
 public:
-	wraw(const reader *);
+	wraw(const char *fname);
 	~wraw();
-	bool write(samples &smp);
-	bool open(const char *fname);
+	void write(const flowspec &fs, samples &smp);
 	const char * name() const { return "raw"; }
 };
 
 class wwave : public writer
 {
+	file mOut;
+	unsigned int mBytesWritten;
+	std::string mFileName;
+private:
+	void open();
+	void flush();
 public:
-	wwave(const reader *);
+	wwave(const char *fname);
 	~wwave();
-	bool write(samples &smp);
-	bool open(const char *fname);
+	void write(const flowspec &fs, samples &smp);
 	const char * name() const { return "wave"; }
 };
 
 class waiff : public writer
 {
+	file mOut;
+	std::string mFileName;
+	unsigned int mSamplesWritten;
+private:
+	void open();
+	void flush();
 public:
-	waiff(const reader *);
+	waiff(const char *fname);
 	~waiff();
-	bool write(samples &smp);
-	bool open(const char *fname);
+	void write(const flowspec &fs, samples &smp);
 	const char * name() const { return "aiff"; }
 };
 
@@ -65,14 +89,12 @@ public:
 class wflacs : public writer, public FLAC::Encoder::Stream
 {
 	bool mIsOpen;
-	unsigned mChannels;
 protected:
 	void show_stat() const;
 public:
-	wflacs(const reader *);
+	wflacs();
 	~wflacs();
-	bool write(samples &smp);
-	bool open(const char *fname);
+	void write(const flowspec &fs, samples &smp);
 	const char * name() const { return "flac"; }
 protected:
 	// Callback handlers.
@@ -84,14 +106,14 @@ protected:
 class wflacf : public writer, public FLAC::Encoder::File
 {
 	bool mIsOpen;
-	unsigned mChannels;
+	std::string mFileName;
+	void open();
 protected:
 	void show_stat() const;
 public:
-	wflacf(const reader *);
+	wflacf(const char *fname);
 	~wflacf();
-	bool write(samples &smp);
-	bool open(const char *fname);
+	void write(const flowspec &fs, samples &smp);
 	const char * name() const { return "flac"; }
 };
 #endif
@@ -101,13 +123,14 @@ class wlame : public writer
 {
 	lame_global_flags *mLame;
 	void set_tags();
-	// Set when the file is ready for writing.
 	bool mReady;
+	file mOut;
+	std::string mFileName;
+	void open();
 public:
-	wlame(const reader *);
+	wlame(const char *fname);
 	~wlame();
-	bool write(samples &smp);
-	bool open(const char *fname);
+	void write(const flowspec &fs, samples &smp);
 	const char * name() const { return "lame"; }
 };
 #endif

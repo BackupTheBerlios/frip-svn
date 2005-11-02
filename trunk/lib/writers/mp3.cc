@@ -3,10 +3,10 @@
 #ifdef HAVE_lame
 #include "all.h"
 
-wlame::wlame(const reader *r) :
-	writer(r)
+wlame::wlame(const char *fname)
 {
 	mLame = lame_init();
+	mFileName = fname;
 	mReady = false;
 }
 
@@ -17,24 +17,21 @@ wlame::~wlame()
 		int sz = lame_encode_finish(mLame, tmp, sizeof(tmp));
 
 		if (sz != 0)
-			out.write(tmp, sz);
+			mOut.write(tmp, sz);
 	}
 }
 
-bool wlame::open(const char *fname)
+void wlame::open()
 {
 #ifdef LAME_USES_VBR
 	int qs[10] = { 64, 80, 96, 112, 128, 160, 192, 224, 256, 320 };
 #endif
 
-	if (!writer::open(fname))
-		return false;
+	if (!mOut.open(mFileName.c_str(), true))
+		throw werr("couldnot open output for writing");
 
-	if (!out.open(fname, true))
-		return false;
-
-	lame_set_in_samplerate(mLame, mReader->GetSampleRate());
-	lame_set_num_channels(mLame, mReader->GetChannels());
+	lame_set_in_samplerate(mLame, mFlowSpec.mSampleRate);
+	lame_set_num_channels(mLame, mFlowSpec.mChannels);
 	lame_set_quality(mLame, 2);
 	lame_set_mode(mLame, STEREO);
 #ifdef LAME_USES_VBR
@@ -46,12 +43,8 @@ bool wlame::open(const char *fname)
 
 	set_tags();
 
-	if (lame_init_params(mLame) == -1) {
-		log("wlame: init_params() failed.");
-		return false;
-	}
-
-	return (mReady = true);
+	if (lame_init_params(mLame) == -1)
+		throw werr("init_params() failed");
 }
 
 void wlame::set_tags()
@@ -62,6 +55,7 @@ void wlame::set_tags()
 	id3tag_add_v2(mLame);
 	id3tag_pad_v2(mLame);
 
+	/*
 	if (mReader->GetTag("ALBUM", val))
 		id3tag_set_album(mLame, val.c_str());
 	if (mReader->GetTag("ARTIST", val))
@@ -74,30 +68,32 @@ void wlame::set_tags()
 		id3tag_set_title(mLame, val.c_str());
 	if (mReader->GetTag("TRACKNUMBER", val))
 		id3tag_set_track(mLame, val.c_str());
+	*/
 }
 
-bool wlame::write(samples &smp)
+void wlame::write(const flowspec &fs, samples &smp)
 {
 	int len;
 	std::vector<short> mp3;
 	std::vector<short>::iterator dit;
 	std::vector<unsigned char>coded;
 
+	if (mFlowSpec.isnull())
+		mFlowSpec = fs;
+	else if (mFlowSpec != fs)
+		throw werr("flow specification changed; not yet supported");
+
 	mp3.resize(smp.size());
 	dit = mp3.begin();
 
-	for (samples::const_iterator it = smp.begin(); it != smp.end(); ++it, ++dit) {
+	for (samples::const_iterator it = smp.begin(); it != smp.end(); ++it, ++dit)
 		*dit = *it;
-	}
 
 	smp.clear();
 	coded.resize(mp3.size() * 2 + 7200);
 
-	if ((len = lame_encode_buffer_interleaved(mLame, &mp3[0], mp3.size() / 2, &coded[0], coded.size())) > 0) {
-		out.write(&coded[0], len);
-	}
-
-	return true;
+	if ((len = lame_encode_buffer_interleaved(mLame, &mp3[0], mp3.size() / 2, &coded[0], coded.size())) > 0)
+		mOut.write(&coded[0], len);
 }
 
 #endif

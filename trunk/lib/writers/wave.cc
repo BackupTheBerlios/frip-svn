@@ -2,61 +2,66 @@
 
 #include "all.h"
 
-wwave::wwave(const reader *r) :
-	writer(r)
+wwave::wwave(const char *fname)
 {
+	mFileName = fname;
+	mBytesWritten = 0;
 }
 
 wwave::~wwave()
 {
+	if (mOut.isopen())
+		flush();
 }
 
-bool wwave::write(samples &smp)
+void wwave::write(const flowspec &fs, samples &smp)
 {
-	if (smp.size() & 1)
-		return true;
+	size_t todo;
 
-	if (mSampleSize != 16) {
-		log("wwave: write failed: unsupported sample size: %u.", mSampleSize);
-		return false;
-	}
+	if (mFlowSpec.isnull())
+		mFlowSpec = fs;
+	else if (mFlowSpec != fs)
+		throw werr("flow specification changed; not yet supported");
 
-	for (samples::const_iterator it = smp.begin(); it != smp.end(); it++) {
-		if (mSampleSize == 16) {
-			out.write_short_le(*it);
-		} else {
-			log("wwave: unsupported output sample size: %u.", mSampleSize);
-			return false;
+	if (!mOut.isopen())
+		open();
+
+	if ((todo = (smp.size() - (smp.size() % mFlowSpec.mChannels))) == 0)
+		return;
+
+	if (mFlowSpec.mSampleSize != 16)
+		throw werr("wave writer only supports 16 bits per sample");
+
+	for (samples::const_iterator it = smp.begin(), lim = it + todo; it != lim; it++) {
+		if (mFlowSpec.mSampleSize == 16) {
+			mOut.write_short_le(*it);
+			mBytesWritten += 2;
 		}
 	}
 
-	smp.clear();
-	return true;
+	smp.erase(smp.begin(), smp.begin() + todo);
 }
 
-bool wwave::open(const char *fname)
+void wwave::open()
 {
-	unsigned bps = mReader->GetFrameSize() / mReader->GetChannels();
-	unsigned pcmbytes = mReader->GetFrameCount() * mReader->GetFrameSize();
+	if (!mOut.open(mFileName.c_str(), true))
+		throw werr("could not open output for writing");
+	mOut.skip(44);
+}
 
-	if (!writer::open(fname))
-		return false;
-
-	if (!out.open(fname, true))
-		return false;
-
-	out.write("RIFF");
-	out.write_int_le(pcmbytes + 44 - 8);
-	out.write("WAVEfmt ");
-	out.write_int_le(16);
-	out.write_short_le(1);
-	out.write_short_le(mReader->GetChannels());
-	out.write_int_le(mReader->GetSampleRate());
-	out.write_int_le(mReader->GetSampleRate() * mReader->GetChannels() * bps);
-	out.write_short_le(mReader->GetChannels() * bps);
-	out.write_short_le(mSampleSize = mReader->GetSampleSize());
-	out.write("data");
-	out.write_int_le(pcmbytes);
-
-	return true;
+void wwave::flush()
+{
+	mOut.rewind(0);
+	mOut.write("RIFF");
+	mOut.write_int_le(mBytesWritten + 44 - 8);
+	mOut.write("WAVEfmt ");
+	mOut.write_int_le(16);
+	mOut.write_short_le(1);
+	mOut.write_short_le(mFlowSpec.mChannels);
+	mOut.write_int_le(mFlowSpec.mSampleRate);
+	mOut.write_int_le(mFlowSpec.mSampleRate * mFlowSpec.mChannels * mFlowSpec.mSampleSize);
+	mOut.write_short_le(mFlowSpec.mChannels * mFlowSpec.mSampleSize);
+	mOut.write_short_le(mFlowSpec.mSampleSize);
+	mOut.write("data");
+	mOut.write_int_le(mBytesWritten);
 }

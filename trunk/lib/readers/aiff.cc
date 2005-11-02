@@ -59,7 +59,7 @@ bool raiff::open(const char *fname)
 			mChunkSize -= subsize;
 			log("raiff: COMM chunk size: %u.", subsize);
 
-			if (!in.read_short_be(mChannels, &subsize)) {
+			if (!in.read_short_be(mFlowSpec.mChannels, &subsize)) {
 				log("raiff: COMM: could not read the number of channels.");
 				return false;
 			}
@@ -68,10 +68,10 @@ bool raiff::open(const char *fname)
 				log("raiff: COMM: could not read the number of sample frames.");
 				return false;
 			} else {
-				mSamplesTotal *= mChannels;
+				mSamplesTotal *= mFlowSpec.mChannels;
 			}
 
-			if (!in.read_short_be(mSampleSize, &subsize)) {
+			if (!in.read_short_be(mFlowSpec.mSampleSize, &subsize)) {
 				log("raiff: COMM: could not read the size of a sample.");
 				return false;
 			}
@@ -80,7 +80,7 @@ bool raiff::open(const char *fname)
 				log("raiff: COMM: could not read sample rate.");
 				return false;
 			} else {
-				mSampleRate = static_cast<unsigned>(ftmp);
+				mFlowSpec.mSampleRate = static_cast<unsigned>(ftmp);
 			}
 
 			if (mFormat == IFF_ID_AIFC) {
@@ -131,16 +131,16 @@ bool raiff::open(const char *fname)
 				return false;
 			}
 
-			log("raiff: channels = %u.", mChannels);
-			log("raiff: sample size = %u.", mSampleSize);
-			log("raiff: sample rate = %u.", GetSampleRate());
+			log("raiff: channels = %u.", mFlowSpec.mChannels);
+			log("raiff: sample size = %u.", mFlowSpec.mSampleSize);
+			log("raiff: sample rate = %u.", mFlowSpec.mSampleRate);
 			log("raiff: frames = %u.", GetFrameCount());
 			log("raiff: block offset = %u.", mBlockOffset);
 			log("raiff: block size = %u.", mBlockSize);
 			log("raiff: byte order = %s.", mLittleEndian ? "le" : "be");
 
 			{
-				unsigned duration = GetFrameCount() / GetSampleRate();
+				unsigned duration = GetFrameCount() / mFlowSpec.mSampleRate;
 				log("raiff: duration = %u:%02u", duration / 60, duration % 60);
 			}
 

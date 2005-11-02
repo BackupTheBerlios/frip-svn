@@ -1,6 +1,6 @@
 // $Id$
 
-#ifdef HAVE_flac
+#ifdef HAVE_flac_never
 #include "all.h"
 
 wflacs::wflacs(const reader *r) :

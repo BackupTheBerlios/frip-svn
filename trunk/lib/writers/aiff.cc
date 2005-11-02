@@ -2,86 +2,93 @@
 
 #include "all.h"
 
-waiff::waiff(const reader *r) :
-	writer(r)
+waiff::waiff(const char *fname)
 {
+	mFileName = fname;
+	mSamplesWritten = 0;
 }
 
 waiff::~waiff()
 {
+	if (mOut.isopen())
+		flush();
 }
 
-bool waiff::write(samples &smp)
+void waiff::write(const flowspec &fs, samples &smp)
 {
-	if (smp.size() & 1)
-		return true;
+	size_t todo;
 
-	if (mSampleSize != 16) {
-		log("waiff: write failed: unsupported sample size: %u.", mSampleSize);
-		return false;
-	}
+	if (mFlowSpec.isnull())
+		mFlowSpec = fs;
+	else if (mFlowSpec != fs)
+		throw werr("flow specification changed; not yet supported");
+	else
+		mFlowSpec = fs;
 
-	for (samples::const_iterator it = smp.begin(); it != smp.end(); it++) {
-		if (mSampleSize == 16) {
-			out.write_short_le(*it);
-		} else {
-			log("waiff: unsupported output sample size: %u.", mSampleSize);
-			return false;
+	if (!mOut.isopen())
+		open();
+
+	if (mFlowSpec.mSampleSize != 16)
+		throw werr("unsupported sample size");
+
+	if ((todo = smp.size() - (smp.size() % mFlowSpec.mChannels)))
+		return;
+
+	for (samples::const_iterator it = smp.begin(), lim = it + todo; it != lim; it++) {
+		if (mFlowSpec.mSampleSize == 16) {
+			mOut.write_short_le(*it);
+			mSamplesWritten++;
 		}
 	}
 
-	smp.clear();
-	return true;
+	smp.erase(smp.begin(), smp.begin() + todo);
 }
 
-bool waiff::open(const char *fname)
+void waiff::open()
+{
+	if (!mOut.open(mFileName.c_str(), true))
+		throw werr("could not open output for writing");
+}
+
+void waiff::flush()
 {
 	int mode = IFF_ID_AIFC;
 	unsigned offset = 2280;
-	unsigned sz_ssnd = mReader->GetFrameCount() * mReader->GetFrameSize();
+	unsigned sz_ssnd = mSamplesWritten * mFlowSpec.mChannels * mFlowSpec.mSampleSize;
 
-	if (!writer::open(fname))
-		return false;
-
-	if (!out.open(fname, true))
-		return false;
-
-	log("waiff: sample size = %u", mSampleSize);
-	log("waiff: payload size = %u", sz_ssnd);
+	mOut.rewind(0);
 
 	if (mode == IFF_ID_AIFC)
 		sz_ssnd += offset + 8;
 
-	out.write_int_be(IFF_ID_FORM);
-	out.write_int_be(sz_ssnd + 56); // chunk size
+	mOut.write_int_be(IFF_ID_FORM);
+	mOut.write_int_be(sz_ssnd + 56); // chunk size
 
-	out.write_int_be(mode);
+	mOut.write_int_be(mode);
 
-	out.write_int_be(IFF_ID_FVER);
-	out.write_int_be(4);
-	out.write_int_be(0xA2805140);
+	mOut.write_int_be(IFF_ID_FVER);
+	mOut.write_int_be(4);
+	mOut.write_int_be(0xA2805140);
 
-	out.write_int_be(IFF_ID_COMM);
-	out.write_int_be(24); // chunk size
-	out.write_short_be(mReader->GetChannels());
-	out.write_int_be(mReader->GetFrameCount());
-	out.write_short_be(mReader->GetSampleSize());
-	out.write_float_be(mReader->GetSampleRate());
-	out.write_int_be(mode == IFF_ID_AIFC ? IFF_ID_2CLE : 0);
-	out.write_short_be(0);
+	mOut.write_int_be(IFF_ID_COMM);
+	mOut.write_int_be(24); // chunk size
+	mOut.write_short_be(mFlowSpec.mChannels);
+	mOut.write_int_be(mFlowSpec.mChannels * mSamplesWritten);
+	mOut.write_short_be(mFlowSpec.mSampleSize);
+	mOut.write_float_be(mFlowSpec.mSampleRate);
+	mOut.write_int_be(mode == IFF_ID_AIFC ? IFF_ID_2CLE : 0);
+	mOut.write_short_be(0);
 
-	out.write_int_be(IFF_ID_SSND);
-	out.write_int_be(sz_ssnd);
+	mOut.write_int_be(IFF_ID_SSND);
+	mOut.write_int_be(sz_ssnd);
 
 	if (mode == IFF_ID_AIFC) {
-		out.write_int_be(offset); // block offset
-		out.write_int_be(0); // block size
+		mOut.write_int_be(offset); // block offset
+		mOut.write_int_be(0); // block size
 	}
 
 	while (offset-- != 0) {
 		char x = 0;
-		out.write(&x, 1);
+		mOut.write(&x, 1);
 	}
-
-	return true;
 }

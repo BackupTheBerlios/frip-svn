@@ -87,12 +87,12 @@ bool rwave::subchunk(unsigned id)
 			return false;
 		}
 
-		if (!in.read_short_le(mChannels, &mChunkSize)) {
+		if (!in.read_short_le(mFlowSpec.mChannels, &mChunkSize)) {
 			log("rwave: fmt: no channel count.");
 			return false;
 		}
 
-		if (!in.read_int_le(mSampleRate, &mChunkSize)) {
+		if (!in.read_int_le(mFlowSpec.mSampleRate, &mChunkSize)) {
 			log("rwave: fmt: no sample rate.");
 			return false;
 		}
@@ -107,26 +107,26 @@ bool rwave::subchunk(unsigned id)
 			return false;
 		}
 
-		if (!in.read_short_le(mSampleSize, &mChunkSize)) {
+		if (!in.read_short_le(mFlowSpec.mSampleSize, &mChunkSize)) {
 			log("rwave: fmt: bit-per-sample not found.");
 			return false;
-		} else if (mSampleSize != 16) {
-			log("rwave: fmt: unsupported bps: %u.", mSampleSize);
+		} else if (mFlowSpec.mSampleSize != 16) {
+			log("rwave: fmt: unsupported bps: %u.", mFlowSpec.mSampleSize);
 			return false;
 		}
 	}
 
 	else if (id == WAV_ID_DATA) {
-		mSamplesLeft = mSamplesTotal = mChunkSize / mChannels;
-		log("rwave: found the data chunk, %u bytes long (%u wide samples).", mChunkSize, mSamplesTotal / (mSampleSize / 8));
+		mSamplesLeft = mSamplesTotal = mChunkSize / mFlowSpec.mChannels;
+		log("rwave: found the data chunk, %u bytes long (%u wide samples).", mChunkSize, mSamplesTotal / (mFlowSpec.mSampleSize / 8));
 
-		log("rwave: channels = %u", mChannels);
-		log("rwave: sample rate = %u", mSampleRate);
+		log("rwave: channels = %u", mFlowSpec.mChannels);
+		log("rwave: sample rate = %u", mFlowSpec.mSampleRate);
 		log("rwave: block align = %u", mBlockAlign);
-		log("rwave: sample size = %u.", mSampleSize);
+		log("rwave: sample size = %u.", mFlowSpec.mSampleSize);
 
 		{
-			unsigned duration = GetFrameCount() / GetSampleRate();
+			unsigned duration = GetFrameCount() / mFlowSpec.mSampleRate;
 			log("rwave: duration = %u:%02u", duration / 60, duration % 60);
 		}
 	}

@@ -3,56 +3,52 @@
 #ifdef HAVE_flac
 #include "all.h"
 
-wflacf::wflacf(const reader *r) :
-	writer(r)
+wflacf::wflacf(const char *fname)
 {
+	mFileName = fname;
 	mIsOpen = false;
 }
 
 wflacf::~wflacf()
 {
-	if (mIsOpen)
-		finish();
 }
 
-bool wflacf::write(samples &smp)
+void wflacf::write(const flowspec &fs, samples &smp)
 {
-	if (smp.size() % mChannels == 0) {
-		if (!process_interleaved(&smp[0], smp.size() / mChannels)) {
-			log("wflacf: encoding error: %s.", get_state().as_cstring());
-			return false;
-		} else {
-			smp.clear();
-		}
-	}
+	size_t todo;
 
-	return true;
+	if (mFlowSpec.isnull())
+		mFlowSpec = fs;
+	else if (mFlowSpec != fs)
+		throw werr("flow specification mismatch");
+
+	if (!mIsOpen)
+		open();
+
+	if ((todo = smp.size() - (smp.size() % mFlowSpec.mChannels)) == 0)
+		return;
+
+	if (!process_interleaved(&smp[0], todo / mFlowSpec.mChannels))
+		throw(get_state().as_cstring());
+	else
+		smp.erase(smp.begin(), smp.begin() + todo);
 }
 
-bool wflacf::open(const char *fname)
+void wflacf::open()
 {
 	// encoder settings.
 	bool midLoose = false, midSide = false, exModel = false;
 	int lpcOrder = 0, blockSize = 1152;
 	int resMin = 0, resMax = 0;
 
-	if (!writer::open(fname))
-		return false;
+	if (!is_valid())
+		throw werr("not a valid flac stream");
 
-	if (!is_valid()) {
-		log("wflacf: not a valid flac stream.");
-		return false;
-	}
+	if (!set_filename(mFileName.c_str()))
+		throw werr(std::string("could not set file name to ") + mFileName);
 
-	if (!set_filename(fname)) {
-		log("wflacf: could not set file name.");
-		return false;
-	}
-
-	if (!set_verify(true)) {
-		log("wflacf: could not enable verification.");
-		return false;
-	}
+	if (!set_verify(true))
+		throw werr("could not enable flac verification");
 
 	switch (mQuality) {
 	case 0:
@@ -107,81 +103,52 @@ bool wflacf::open(const char *fname)
 
 	set_do_exhaustive_model_search(true);
 
-	if (!set_blocksize(blockSize)) {
-		log("wflacf: could not set blocksize.");
-		return false;
+	if (!set_blocksize(blockSize))
+		throw werr("could not set blocksize");
+
+	if (!set_channels(mFlowSpec.mChannels))
+		throw werr("could not set channels");
+
+	if (mFlowSpec.mChannels == 2) {
+		if (!set_do_mid_side_stereo(midSide))
+			throw werr("could not set do_mid_side_stereo");
+		if (!set_loose_mid_side_stereo(midLoose))
+			throw werr("could not set loose_mid_side_stereo");
 	}
 
-	if (!set_channels(mChannels = mReader->GetChannels())) {
-		log("wflacf: could not set channels.");
-		return false;
-	}
+	if (!set_do_exhaustive_model_search(exModel))
+		throw werr("could not set do_exhaustive_model_search");
 
-	if (mReader->GetChannels() == 2) {
-		if (!set_do_mid_side_stereo(midSide)) {
-			log("wflacf: could not set do_mid_side_stereo.");
-			return false;
-		}
+	if (!set_bits_per_sample(mFlowSpec.mSampleSize))
+		throw werr("could not set sample size");
 
-		if (!set_loose_mid_side_stereo(midLoose)) {
-			log("wflacf: could not set loose_mid_side_stereo.");
-			return false;
-		}
-	}
+	if (!set_sample_rate(static_cast<unsigned>(mFlowSpec.mSampleRate)))
+		throw werr("could not set sample rate");
 
-	if (!set_do_exhaustive_model_search(exModel)) {
-		log("wflacf: could not set do_exhaustive_model_search.");
-		return false;
-	}
+	if (!set_min_residual_partition_order(resMin))
+		throw werr("could not set min_residual_partition_order in the output stream");
 
-	if (!set_bits_per_sample(mReader->GetSampleSize())) {
-		log("wflacf: could not set sample size.");
-		return false;
-	}
+	if (!set_max_residual_partition_order(resMax))
+		throw werr("could not set max_residual_partition_order in the output stream");
 
-	if (!set_sample_rate(static_cast<unsigned>(mReader->GetSampleRate()))) {
-		log("wflacf: could not set sample rate.");
-		return false;
-	}
+	if (!set_max_lpc_order(lpcOrder))
+		throw werr("could not set max_lpc_order in the output stream");
 
-	if (!set_min_residual_partition_order(resMin)) {
-		log("wlac: could not set min_residual_partition_order in the output stream.");
-		return false;
-	}
+	if (!set_streamable_subset(true))
+		throw werr("could not set streamable_subset in the output stream");
 
-	if (!set_max_residual_partition_order(resMax)) {
-		log("wflacf: could not set max_residual_partition_order in the output stream.");
-		return false;
-	}
+	if (!set_qlp_coeff_precision(0))
+		throw werr("could not set qlp_coeff_precision in the output stream");
 
-	if (!set_max_lpc_order(lpcOrder)) {
-		log("wflacf: could not set max_lpc_order in the output stream.");
-		return false;
-	}
-
-	if (!set_streamable_subset(true)) {
-		log("wflacf: could not set streamable_subset in the output stream.");
-		return false;
-	}
-
-	if (!set_qlp_coeff_precision(0)) {
-		log("wflacf: could not set qlp_coeff_precision in the output stream.");
-		return false;
-	}
-
-	if (!set_do_qlp_coeff_prec_search(true)) {
-		log("wflacf: could not set do_qlp_coeff_prec_search.");
-		return false;
-	}
+	if (!set_do_qlp_coeff_prec_search(true))
+		throw werr("could not set do_qlp_coeff_prec_search");
 
 	show_stat();
 
-	if (init() != ::FLAC__STREAM_ENCODER_OK) {
-		log("wflacf: the output stream failed to initialize:       %s", get_state().as_cstring());
-		return false;
-	}
+	if (init() != ::FLAC__STREAM_ENCODER_OK)
+		throw werr(get_state().as_cstring());
 
-	return mIsOpen = true;
+	mIsOpen = true;
 }
 
 void wflacf::show_stat() const

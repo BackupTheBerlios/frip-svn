@@ -38,7 +38,18 @@ void file::skip(unsigned count, unsigned *sub)
 	fseek(in, count, SEEK_CUR);
 }
 
-bool file::read_short_le(short &value, unsigned *sum)
+size_t file::tell() const
+{
+	return (in == NULL) ? 0 : static_cast<size_t>(ftell(in));
+}
+
+void file::rewind(size_t to)
+{
+	if (in != NULL)
+		fseek(in, to, SEEK_SET);
+}
+
+bool file::read_short_le_raw(short &value, unsigned *sum)
 {
 	unsigned char tmp[2];
 	if (fread(tmp, 1, 2, in) != 2)
@@ -49,29 +60,7 @@ bool file::read_short_le(short &value, unsigned *sum)
 	return true;
 }
 
-bool file::read_short_le(unsigned short &value, unsigned *sum)
-{
-	unsigned char tmp[2];
-	if (fread(tmp, 1, 2, in) != 2)
-		return false;
-	if (sum != NULL)
-		*sum -= 2;
-	value = static_cast<unsigned short>(tmp[1] << 8 | tmp[0]);
-	return true;
-}
-
-bool file::read_short_be(unsigned short &sample, unsigned *sub)
-{
-	unsigned char tmp[2];
-	if (fread(tmp, 1, 2, in) != 2)
-		return false;
-	if (sub != NULL)
-		*sub -= 2;
-	sample = static_cast<unsigned short>((tmp[0] << 8) | tmp[1]);
-	return true;
-}
-
-bool file::read_short_be(short &sample, unsigned *sub)
+bool file::read_short_be_raw(short &sample, unsigned *sub)
 {
 	unsigned char tmp[2];
 	if (fread(tmp, 1, 2, in) != 2)

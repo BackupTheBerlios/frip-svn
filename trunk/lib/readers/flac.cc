@@ -37,17 +37,17 @@ rflac::~rflac()
 	size_t osz;
 	samples::iterator it;
 
-	if (frame->header.channels != mChannels) {
-		log("rflac: bad frame: channel number mismatch: expected %u, received %u.", mChannels, frame->header.channels);
+	if (frame->header.channels != mFlowSpec.mChannels) {
+		log("rflac: bad frame: channel number mismatch: expected %u, received %u.", mFlowSpec.mChannels, frame->header.channels);
 		return ::FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
 	}
 
 	osz = mSamples->size();
-	mSamples->resize(osz + frame->header.blocksize * mChannels);
+	mSamples->resize(osz + frame->header.blocksize * mFlowSpec.mChannels);
 	it = mSamples->begin() + osz;
 
 	for (unsigned fidx = 0, lim = frame->header.blocksize; fidx < lim; ++fidx) {
-		for (unsigned int ch = 0; ch < mChannels; ++ch) {
+		for (unsigned int ch = 0; ch < mFlowSpec.mChannels; ++ch) {
 			*it++ = buffer[ch][fidx];
 		}
 	}
@@ -59,9 +59,9 @@ void rflac::metadata_callback(const ::FLAC__StreamMetadata *m)
 {
 	switch (m->type) {
 	case FLAC__METADATA_TYPE_STREAMINFO:
-		mSampleRate = m->data.stream_info.sample_rate;
-		mChannels = m->data.stream_info.channels;
-		mSampleSize = m->data.stream_info.bits_per_sample;
+		mFlowSpec.mSampleRate = m->data.stream_info.sample_rate;
+		mFlowSpec.mChannels = m->data.stream_info.channels;
+		mFlowSpec.mSampleSize = m->data.stream_info.bits_per_sample;
 		log("rflac: stream info read.");
 		break;
 	case FLAC__METADATA_TYPE_VORBIS_COMMENT:
@@ -90,13 +90,13 @@ void rflac::error_callback(::FLAC__StreamDecoderErrorStatus status)
 bool rflac::read(samples &smp, size_t preferred_wide_sample_count)
 {
 	size_t osz = smp.size();
-	size_t need = osz + preferred_wide_sample_count * mChannels;
+	size_t need = osz + preferred_wide_sample_count * mFlowSpec.mChannels;
 
 	if (mEOF)
 		return false;
 
-	if (mSampleRate != 44100) {
-		log("rflac: sample rate mismatch (%u vs. 44100), aborting.", mSampleRate);
+	if (mFlowSpec.mSampleRate != 44100) {
+		log("rflac: sample rate mismatch (%u vs. 44100), aborting.", mFlowSpec.mSampleRate);
 		return false;
 	}
 
