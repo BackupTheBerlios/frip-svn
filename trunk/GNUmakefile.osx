@@ -1,7 +1,8 @@
 CLI = frip
 CLIO = $(patsubst %.cc,%.o,$(wildcard cli/*.cc))
 LIB = frip.1
-LIBO = $(patsubst %.cc,%.o,$(wildcard lib/*.cc) $(wildcard lib/filters/*.cc) $(wildcard lib/readers/*.cc) $(wildcard lib/writers/*.cc))
+LIBD = lib lib/filters lib/readers lib/writers
+LIBO = $(patsubst %.cc,%.o,$(foreach DIR, $(LIBD), $(wildcard $(DIR)/*.cc)))
 # CXXFLAGS += -O2 -fomit-frame-pointer -fno-rtti -Wall -Werror -DVERSION="1.0" -DHAVE_getopt -DHAVE_flac -DHAVE_lame
 CXXFLAGS += -O0 -g -fno-rtti -Wall -Werror -DVERSION="1.0" -DHAVE_getopt -DHAVE_flac -DHAVE_lame
 
